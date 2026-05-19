@@ -45,8 +45,7 @@ class _SearchScreenState extends State<SearchScreen> {
   List<Cocktail> _results = [];
   bool _isLoading = false;
 
-  // TODO: 백엔드 주소 확정되면 교체
-  static const String _baseUrl = 'http://localhost:8000'; // 지금은 로컬주소
+  static const String _baseUrl = 'http://cau-swe-be-server.up.railway.app';
 
   Future<void> _search(String query) async {
     final trimmed = query.trim();
