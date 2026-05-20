@@ -1,7 +1,7 @@
 // lib/main.dart
 
 import 'package:flutter/material.dart';
-import 'screens/search.dart';
+import 'screens/home.dart';
 import 'theme/colors.dart';
 
 void main() {
@@ -30,7 +30,7 @@ class Cocktailer extends StatelessWidget {
         ),
       ),
 
-      home: const SearchScreen(), //바로 검색창으로 이동
+      home: const HomeScreen(),
     );
   }
 }
