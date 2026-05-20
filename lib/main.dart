@@ -20,7 +20,7 @@ class Cocktailer extends StatelessWidget {
       debugShowCheckedModeBanner: false,
 
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueGrey),
         useMaterial3: true,
       ),
 

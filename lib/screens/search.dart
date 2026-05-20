@@ -4,6 +4,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+
+// 검색 API에서 호출시 받는 정보 클래스 정의
 class Cocktail {
   final String name;
   final String nameKo;
@@ -24,6 +26,44 @@ class Cocktail {
   }
 }
 
+// glass_type 문자열 → 아이콘 매핑
+// 일단 지금은 전부 기본 잔으로 표시됨
+IconData _glassIcon(String glassType) {
+  switch (glassType.toLowerCase()) {
+    case 'cocktail glass':
+    case 'martini glass':
+      return Icons.wine_bar; // 마티니/칵테일 잔
+    case 'highball glass':
+    case 'collins glass':
+      return Icons.local_drink; // 하이볼/콜린스 잔 (키 큰 잔)
+    case 'old fashioned glass':
+    case 'rocks glass':
+    case 'lowball glass':
+      return Icons.sports_bar; // 올드패션드/락스 잔 (낮은 잔)
+    case 'shot glass':
+      return Icons.local_bar; // 샷 잔
+    case 'wine glass':
+    case 'red wine glass':
+    case 'white wine glass':
+      return Icons.wine_bar;
+    case 'champagne flute':
+    case 'champagne glass':
+      return Icons.celebration;
+    case 'beer glass':
+    case 'beer mug':
+    case 'pint glass':
+      return Icons.sports_bar;
+    case 'copper mug':
+    case 'mug':
+      return Icons.coffee; // 머그
+    case 'hurricane glass':
+    case 'poco grande glass':
+      return Icons.local_drink;
+    default:
+      return Icons.local_bar; // 알 수 없는 잔 타입 fallback
+  }
+}
+
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -37,7 +77,10 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _isLoading = false;
   Timer? _debounceTimer;
 
+  // 우리 서버 주소인데 지금 하드코딩 되어있는거 이후에 분리해야합니다
   static const String _baseUrl = 'http://cau-swe-be-server.up.railway.app';
+
+  // 치는동안에는 검색안되게 API호출전까지의 딜레이
   static const Duration _debounceDuration = Duration(milliseconds: 500);
 
   void _onSearchChanged(String query) {
@@ -55,12 +98,12 @@ class _SearchScreenState extends State<SearchScreen> {
     if (trimmed.isEmpty) {
       setState(() {
         _results = [];
-        _isLoading = false; // 빈 검색어면 로딩도 끄기
+        _isLoading = false;
       });
       return;
     }
 
-    setState(() => _isLoading = true); // 로딩 시작 (목록은 그대로 유지)
+    setState(() => _isLoading = true);
 
     try {
       final uri = Uri.parse('$_baseUrl/cocktails/search?q=$trimmed');
@@ -69,15 +112,13 @@ class _SearchScreenState extends State<SearchScreen> {
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         setState(() {
-          _results = data.map((e) => Cocktail.fromJson(e)).toList(); // 프론트 변경: API 완료되면 그때 목록 교체
+          _results = data.map((e) => Cocktail.fromJson(e)).toList();
         });
-      } else {
-        // 에러시 기존 목록 유지 (선택), 혹은 초기화하려면 _results = [] 로 변경
       }
     } catch (e) {
-      // 네트워크 에러시도 기존 목록 유지
+      // 네트워크 에러시 기존 목록 유지
     } finally {
-      setState(() => _isLoading = false); // 로딩 종료
+      setState(() => _isLoading = false);
     }
   }
 
@@ -92,18 +133,21 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('🍹 Cocktail Search'),
+        title: const Text('Cocktail Search'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         child: Column(
           children: [
             TextField(
               controller: _controller,
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
-                hintText: '칵테일 이름을 입력하세요',
+                hintText: '칵테일을 검색해보세요',
+                hintStyle: const TextStyle(
+                  color: Color.fromARGB(255, 119, 119, 119),
+                ),
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear),
@@ -112,14 +156,16 @@ class _SearchScreenState extends State<SearchScreen> {
                     _onSearchChanged('');
                   },
                 ),
+                filled: true,
+                fillColor: const Color.fromARGB(255, 230, 230, 230),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ), 
               ),
             ),
 
-            // 프론트 변경: CircularProgressIndicator 대신 얇은 LinearProgressIndicator
-            // 로딩 중엔 진행바 표시, 아니면 투명한 SizedBox로 자리만 유지 (레이아웃 흔들림 방지)
+            // 얇은 로딩 인디케이터 (레이아웃 흔들림 방지용 고정 높이)
             SizedBox(
               height: 4,
               child: _isLoading
@@ -127,37 +173,37 @@ class _SearchScreenState extends State<SearchScreen> {
                   : const SizedBox.shrink(),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
 
             Expanded(
-              // 프론트 변경: _isLoading 여부와 관계없이 항상 목록을 보여줌
               child: _results.isEmpty
                   ? const Center(
-                      child: Text('검색어를 입력해보세요',
-                          style: TextStyle(color: Colors.grey)),
+                      child: Text(
+                        '검색어를 입력해보세요',  // TODO : 검색결과 없을시 결과없음 표시하는거 만들어야함
+                        style: TextStyle(color: Colors.grey),
+                      ),
                     )
                   : ListView.builder(
                       itemCount: _results.length,
                       itemBuilder: (context, index) {
                         final cocktail = _results[index];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          child: ListTile(
-                            leading: const Icon(Icons.local_bar,
-                                color: Colors.deepPurple),
-                            title: Text(cocktail.name,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(cocktail.nameKo),
-                                Text(cocktail.glassType,
-                                    style: const TextStyle(
-                                        color: Colors.grey, fontSize: 12)),
-                              ],
-                            ),
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 4.0,
+                            vertical: 0.1,
                           ),
+                          leading: Icon(
+                            _glassIcon(cocktail.glassType),
+                            color: Colors.blueGrey,
+                          ),
+                          title: Text(
+                            cocktail.nameKo,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            cocktail.name,
+                            style: const TextStyle(fontSize: 13, color: Color.fromARGB(255, 85, 84, 84)),
+                            ),
                         );
                       },
                     ),
