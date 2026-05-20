@@ -27,7 +27,7 @@ class CocktailDetail {
   final String recipe;
   final String glassType;
   final String imageUrl;
-  final int abv;
+  final int? abv;
   final String? description;
   final List<CocktailIngredient> ingredients;
 
@@ -38,7 +38,7 @@ class CocktailDetail {
     required this.recipe,
     required this.glassType,
     required this.imageUrl,
-    required this.abv,
+    this.abv,
     this.description,
     required this.ingredients,
   });
@@ -51,7 +51,7 @@ class CocktailDetail {
       recipe: json['recipe'],
       glassType: json['glass_type'],
       imageUrl: json['image_url'] ?? '',
-      abv: (json['abv'] as num).toInt(),
+      abv: json['abv'] != null ? (json['abv'] as num).toInt() : null,
       description: json['description'],
       ingredients: (json['ingredients'] as List)
           .map((e) => CocktailIngredient.fromJson(e))
@@ -147,22 +147,24 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
                 d.nameKo,
                 style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(width: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'ABV ${d.abv}%',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
+              if (d.abv != null) ...[
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'ABV ${d.abv}%',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
           const Divider(height: 48),
