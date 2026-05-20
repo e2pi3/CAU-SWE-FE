@@ -1,17 +1,23 @@
 // lib/screens/search.dart
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../theme/colors.dart';
+import '../constants/app_config.dart';
+import 'cocktail_info.dart';
 
 
 // 검색 API에서 호출시 받는 정보 클래스 정의
 class Cocktail {
+  final String id;
   final String name;
   final String nameKo;
   final String glassType;
 
   Cocktail({
+    required this.id,
     required this.name,
     required this.nameKo,
     required this.glassType,
@@ -19,6 +25,7 @@ class Cocktail {
 
   factory Cocktail.fromJson(Map<String, dynamic> json) {
     return Cocktail(
+      id: json['id'].toString(),
       name: json['name'],
       nameKo: json['name_ko'],
       glassType: json['glass_type'],
@@ -32,16 +39,16 @@ IconData _glassIcon(String glassType) {
   switch (glassType.toLowerCase()) {
     case 'cocktail glass':
     case 'martini glass':
-      return Icons.wine_bar; // 마티니/칵테일 잔
+      return Icons.wine_bar;
     case 'highball glass':
     case 'collins glass':
-      return Icons.local_drink; // 하이볼/콜린스 잔 (키 큰 잔)
+      return Icons.local_drink; 
     case 'old fashioned glass':
     case 'rocks glass':
     case 'lowball glass':
-      return Icons.sports_bar; // 올드패션드/락스 잔 (낮은 잔)
+      return Icons.sports_bar; 
     case 'shot glass':
-      return Icons.local_bar; // 샷 잔
+      return Icons.local_bar;
     case 'wine glass':
     case 'red wine glass':
     case 'white wine glass':
@@ -55,7 +62,7 @@ IconData _glassIcon(String glassType) {
       return Icons.sports_bar;
     case 'copper mug':
     case 'mug':
-      return Icons.coffee; // 머그
+      return Icons.coffee;
     case 'hurricane glass':
     case 'poco grande glass':
       return Icons.local_drink;
@@ -76,9 +83,6 @@ class _SearchScreenState extends State<SearchScreen> {
   List<Cocktail> _results = [];
   bool _isLoading = false;
   Timer? _debounceTimer;
-
-  // 우리 서버 주소인데 지금 하드코딩 되어있는거 이후에 분리해야합니다
-  static const String _baseUrl = 'http://cau-swe-be-server.up.railway.app';
 
   // 치는동안에는 검색안되게 API호출전까지의 딜레이
   static const Duration _debounceDuration = Duration(milliseconds: 500);
@@ -106,7 +110,7 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final uri = Uri.parse('$_baseUrl/cocktails/search?q=$trimmed');
+      final uri = Uri.parse('${AppConfig.baseUrl}/cocktails/search?q=$trimmed');
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
@@ -134,7 +138,6 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cocktail Search'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -146,7 +149,7 @@ class _SearchScreenState extends State<SearchScreen> {
               decoration: InputDecoration(
                 hintText: '칵테일을 검색해보세요',
                 hintStyle: const TextStyle(
-                  color: Color.fromARGB(255, 119, 119, 119),
+                  color: AppColors.hintText,
                 ),
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: IconButton(
@@ -157,7 +160,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   },
                 ),
                 filled: true,
-                fillColor: const Color.fromARGB(255, 230, 230, 230),
+                fillColor: AppColors.inputFill,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,
@@ -179,8 +182,8 @@ class _SearchScreenState extends State<SearchScreen> {
               child: _results.isEmpty
                   ? const Center(
                       child: Text(
-                        '검색어를 입력해보세요',  // TODO : 검색결과 없을시 결과없음 표시하는거 만들어야함
-                        style: TextStyle(color: Colors.grey),
+                        '검색어를 입력해보세요',
+                        style: TextStyle(color: AppColors.emptyText),
                       ),
                     )
                   : ListView.builder(
@@ -194,7 +197,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           ),
                           leading: Icon(
                             _glassIcon(cocktail.glassType),
-                            color: Colors.blueGrey,
+                            color: AppColors.primary,
                           ),
                           title: Text(
                             cocktail.nameKo,
@@ -202,8 +205,14 @@ class _SearchScreenState extends State<SearchScreen> {
                           ),
                           subtitle: Text(
                             cocktail.name,
-                            style: const TextStyle(fontSize: 13, color: Color.fromARGB(255, 85, 84, 84)),
+                            style: const TextStyle(fontSize: 13, color: AppColors.subtitleText),
+                          ),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => CocktailInfoScreen(id: cocktail.id),
                             ),
+                          ),
                         );
                       },
                     ),
