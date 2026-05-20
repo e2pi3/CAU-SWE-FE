@@ -69,7 +69,6 @@ class Ingredient {
 
   factory Ingredient.fromJson(Map<String, dynamic> json) {
     return Ingredient(
-      // JSON의 'ingredient' 키가 한글 이름이므로 nameKo에 매핑
       nameKo: json['ingredient'] ?? '',
       amount: json['amount']?.toString() ?? '',
     );
@@ -133,29 +132,6 @@ class _CocktailDetailScreenState extends State<CocktailDetailScreen> {
     }
   }
 
-  // ── 재료 아이콘 (한글 매핑으로 수정) ────────────────────────────
-  IconData _ingredientIcon(String nameKo) {
-    if (nameKo.contains('보드카') || nameKo.contains('럼') || 
-        nameKo.contains('진') || nameKo.contains('데킬라') || nameKo.contains('위스키')) {
-      return Icons.wine_bar;
-    }
-    if (nameKo.contains('즙') || nameKo.contains('주스') || nameKo.contains('레몬') || nameKo.contains('라임')) {
-      return Icons.emoji_food_beverage;
-    }
-    if (nameKo.contains('시럽') || nameKo.contains('설탕')) {
-      return Icons.water_drop;
-    }
-    if (nameKo.contains('민트') || nameKo.contains('애플민트') || nameKo.contains('허브')) {
-      return Icons.eco;
-    }
-    if (nameKo.contains('콜라') || nameKo.contains('소다') || nameKo.contains('토닉')) {
-      return Icons.bubble_chart;
-    }
-    if (nameKo.contains('얼음')) {
-      return Icons.ac_unit;
-    }
-    return Icons.local_bar;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +146,6 @@ class _CocktailDetailScreenState extends State<CocktailDetailScreen> {
                   isFavorite: _isFavorite,
                   onFavoriteToggle: () =>
                       setState(() => _isFavorite = !_isFavorite),
-                  ingredientIcon: _ingredientIcon,
                 ),
     );
   }
@@ -226,13 +201,11 @@ class _DetailBody extends StatelessWidget {
   final CocktailDetail detail;
   final bool isFavorite;
   final VoidCallback onFavoriteToggle;
-  final IconData Function(String) ingredientIcon;
 
   const _DetailBody({
     required this.detail,
     required this.isFavorite,
     required this.onFavoriteToggle,
-    required this.ingredientIcon,
   });
 
   @override
@@ -322,7 +295,6 @@ class _DetailBody extends StatelessWidget {
                 ...detail.ingredients.map(
                   (ing) => _IngredientRow(
                     ingredient: ing,
-                    icon: ingredientIcon(ing.nameKo),
                   ),
                 ),
                 const SizedBox(height: 28),
@@ -373,12 +345,6 @@ class _MetaBadges extends StatelessWidget {
             color: Colors.white24,
             textColor: Colors.white70,
           ),
-        if (detail.glassType.isNotEmpty)
-          _Badge(
-            label: 'GLASS: ${detail.glassType.replaceAll('_', ' ').toUpperCase()}',
-            color: Colors.white24,
-            textColor: Colors.white70,
-          ),
       ],
     );
   }
@@ -426,9 +392,8 @@ class _SectionHeader extends StatelessWidget {
 // ─────────────────────────────────────────────
 class _IngredientRow extends StatelessWidget {
   final Ingredient ingredient;
-  final IconData icon;
 
-  const _IngredientRow({required this.ingredient, required this.icon});
+  const _IngredientRow({required this.ingredient});
 
   @override
   Widget build(BuildContext context) {
@@ -436,15 +401,6 @@ class _IngredientRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 16, color: const Color(0xFF69F0AE)),
-          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

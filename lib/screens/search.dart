@@ -171,7 +171,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   },
                 ),
                 filled: true,
-                fillColor: const Color.fromARGB(255, 230, 230, 230),
+                fillColor: const Color.fromARGB(255, 240, 240, 240),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,
@@ -221,11 +221,6 @@ class _SearchScreenState extends State<SearchScreen> {
                               color: Color.fromARGB(255, 85, 84, 84),
                             ),
                           ),
-                          trailing: const Icon(
-                            Icons.chevron_right,
-                            color: Colors.grey,
-                          ),
-                          // ← 탭 시 상세 페이지로 이동
                           onTap: () => _navigateToDetail(cocktail),
                         );
                       },
