@@ -12,13 +12,11 @@ class CocktailDetail {
   final String nameKo;
   final String glassType;
   final String? description;
-  final double? alcoholVolume;
-  final String? spiritType;
-  final String? strength;
-  final String? difficulty;
+  final double? abv; // alcohol_volume 대신 abv로 변경
+  final String? recipe; // steps 대신 recipe 사용
   final String? imageUrl;
   final List<Ingredient> ingredients;
-  final List<String> steps;
+  final List<String> steps; // recipe를 가공해서 담을 리스트
 
   CocktailDetail({
     required this.id,
@@ -26,60 +24,56 @@ class CocktailDetail {
     required this.nameKo,
     required this.glassType,
     this.description,
-    this.alcoholVolume,
-    this.spiritType,
-    this.strength,
-    this.difficulty,
+    this.abv,
+    this.recipe,
     this.imageUrl,
     required this.ingredients,
     required this.steps,
   });
 
   factory CocktailDetail.fromJson(Map<String, dynamic> json) {
+    // recipe 문자열을 문장별로 쪼개어 리스트로 변환 (온점 기준)
+    final String rawRecipe = json['recipe'] ?? '';
+    final List<String> parsedSteps = rawRecipe
+        .split('.')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .map((e) => '$e.') // 잘려나간 온점 다시 붙여주기
+        .toList();
+
     return CocktailDetail(
       id: int.parse(json['id'].toString()),
-      name: json['name'],
-      nameKo: json['name_ko'],
-      glassType: json['glass_type'],
+      name: json['name'] ?? '',
+      nameKo: json['name_ko'] ?? '',
+      glassType: json['glass_type'] ?? '',
       description: json['description'],
-      alcoholVolume: (json['alcohol_volume'] as num?)?.toDouble(),
-      spiritType: json['spirit_type'],
-      strength: json['strength'],
-      difficulty: json['difficulty'],
+      abv: (json['abv'] as num?)?.toDouble(), // 'abv' 키 대응
+      recipe: rawRecipe,
       imageUrl: json['image_url'],
       ingredients: (json['ingredients'] as List<dynamic>? ?? [])
           .map((e) => Ingredient.fromJson(e))
           .toList(),
-      steps: (json['steps'] as List<dynamic>? ?? [])
-          .map((e) => e.toString())
-          .toList(),
+      steps: parsedSteps, // 가공된 스텝 리스트 주입
     );
   }
 }
 
 class Ingredient {
-  final String name;
   final String nameKo;
   final String amount;
-  final String? unit;
 
   Ingredient({
-    required this.name,
     required this.nameKo,
     required this.amount,
-    this.unit,
   });
 
   factory Ingredient.fromJson(Map<String, dynamic> json) {
     return Ingredient(
-      name: json['name'],
-      nameKo: json['name_ko'] ?? json['name'],
+      // JSON의 'ingredient' 키가 한글 이름이므로 nameKo에 매핑
+      nameKo: json['ingredient'] ?? '',
       amount: json['amount']?.toString() ?? '',
-      unit: json['unit'],
     );
   }
-
-  String get displayAmount => unit != null ? '$amount$unit' : amount;
 }
 
 // ─────────────────────────────────────────────
@@ -87,7 +81,7 @@ class Ingredient {
 // ─────────────────────────────────────────────
 class CocktailDetailScreen extends StatefulWidget {
   final int cocktailId;
-  final String cocktailNameKo; // 로딩 중 AppBar 제목에 사용
+  final String cocktailNameKo;
 
   const CocktailDetailScreen({
     super.key,
@@ -105,7 +99,7 @@ class _CocktailDetailScreenState extends State<CocktailDetailScreen> {
   CocktailDetail? _detail;
   bool _isLoading = true;
   String? _error;
-  bool _isFavorite = false; // TODO: 즐겨찾기 로컬 저장 연동
+  bool _isFavorite = false;
 
   @override
   void initState() {
@@ -133,63 +127,36 @@ class _CocktailDetailScreenState extends State<CocktailDetailScreen> {
     } catch (e) {
       setState(() {
         _error = '네트워크 오류가 발생했어요';
+        debugPrint('에러 발생: $e');
         _isLoading = false;
       });
     }
   }
 
-  // ── 배지 색상 ──────────────────────────────
-  Color _strengthColor(String? s) {
-    switch (s?.toLowerCase()) {
-      case 'strong':
-        return const Color(0xFFE53935);
-      case 'medium':
-        return const Color(0xFFFB8C00);
-      case 'light':
-        return const Color(0xFF43A047);
-      default:
-        return Colors.grey;
-    }
-  }
-
-  Color _difficultyColor(String? d) {
-    switch (d?.toLowerCase()) {
-      case 'hard':
-        return const Color(0xFFE53935);
-      case 'medium':
-        return const Color(0xFFFB8C00);
-      case 'easy':
-        return const Color(0xFF43A047);
-      default:
-        return Colors.grey;
-    }
-  }
-
-  // ── 재료 아이콘 ────────────────────────────
-  IconData _ingredientIcon(String name) {
-    final n = name.toLowerCase();
-    if (n.contains('rum') || n.contains('whiskey') || n.contains('vodka') ||
-        n.contains('gin') || n.contains('tequila')) {
+  // ── 재료 아이콘 (한글 매핑으로 수정) ────────────────────────────
+  IconData _ingredientIcon(String nameKo) {
+    if (nameKo.contains('보드카') || nameKo.contains('럼') || 
+        nameKo.contains('진') || nameKo.contains('데킬라') || nameKo.contains('위스키')) {
       return Icons.wine_bar;
     }
-    if (n.contains('juice') || n.contains('lime') || n.contains('lemon')) {
+    if (nameKo.contains('즙') || nameKo.contains('주스') || nameKo.contains('레몬') || nameKo.contains('라임')) {
       return Icons.emoji_food_beverage;
     }
-    if (n.contains('syrup') || n.contains('sugar')) {
+    if (nameKo.contains('시럽') || nameKo.contains('설탕')) {
       return Icons.water_drop;
     }
-    if (n.contains('mint') || n.contains('herb') || n.contains('leaf')) {
+    if (nameKo.contains('민트') || nameKo.contains('애플민트') || nameKo.contains('허브')) {
       return Icons.eco;
     }
-    if (n.contains('soda') || n.contains('water') || n.contains('tonic')) {
+    if (nameKo.contains('콜라') || nameKo.contains('소다') || nameKo.contains('토닉')) {
       return Icons.bubble_chart;
     }
-    if (n.contains('ice')) { return Icons.ac_unit; }
-    if (n.contains('cream') || n.contains('milk')) { return Icons.local_cafe; }
+    if (nameKo.contains('얼음')) {
+      return Icons.ac_unit;
+    }
     return Icons.local_bar;
   }
 
-  // ── 빌드 ──────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -203,8 +170,6 @@ class _CocktailDetailScreenState extends State<CocktailDetailScreen> {
                   isFavorite: _isFavorite,
                   onFavoriteToggle: () =>
                       setState(() => _isFavorite = !_isFavorite),
-                  strengthColor: _strengthColor(_detail!.strength),
-                  difficultyColor: _difficultyColor(_detail!.difficulty),
                   ingredientIcon: _ingredientIcon,
                 ),
     );
@@ -212,39 +177,29 @@ class _CocktailDetailScreenState extends State<CocktailDetailScreen> {
 }
 
 // ─────────────────────────────────────────────
-// 로딩
+// 로딩 & 에러 뷰 (기존 코드와 동일)
 // ─────────────────────────────────────────────
 class _LoadingView extends StatelessWidget {
   const _LoadingView();
-
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: Color(0xFF121212),
-      body: Center(
-        child: CircularProgressIndicator(color: Color(0xFF69F0AE)),
-      ),
+      body: Center(child: CircularProgressIndicator(color: Color(0xFF69F0AE))),
     );
   }
 }
 
-// ─────────────────────────────────────────────
-// 에러
-// ─────────────────────────────────────────────
 class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
-
   const _ErrorView({required this.message, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.white,
-      ),
+      appBar: AppBar(backgroundColor: Colors.transparent, foregroundColor: Colors.white),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -265,22 +220,18 @@ class _ErrorView extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// 상세 본문 (CustomScrollView + SliverAppBar)
+// 상세 본문
 // ─────────────────────────────────────────────
 class _DetailBody extends StatelessWidget {
   final CocktailDetail detail;
   final bool isFavorite;
   final VoidCallback onFavoriteToggle;
-  final Color strengthColor;
-  final Color difficultyColor;
   final IconData Function(String) ingredientIcon;
 
   const _DetailBody({
     required this.detail,
     required this.isFavorite,
     required this.onFavoriteToggle,
-    required this.strengthColor,
-    required this.difficultyColor,
     required this.ingredientIcon,
   });
 
@@ -288,7 +239,6 @@ class _DetailBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomScrollView(
       slivers: [
-        // ── Hero 이미지 + AppBar ──────────────
         SliverAppBar(
           expandedHeight: 280,
           pinned: true,
@@ -307,31 +257,23 @@ class _DetailBody extends StatelessWidget {
             background: Stack(
               fit: StackFit.expand,
               children: [
-                // 이미지 or 플레이스홀더
                 detail.imageUrl != null
                     ? Image.network(
                         detail.imageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            const _ImagePlaceholder(),
+                        errorBuilder: (_, __, ___) => const _ImagePlaceholder(),
                       )
                     : const _ImagePlaceholder(),
-                // 아래로 갈수록 어두워지는 그라디언트
                 const DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Color(0xCC000000),
-                        Color(0xFF121212),
-                      ],
+                      colors: [Colors.transparent, Color(0xCC000000), Color(0xFF121212)],
                       stops: [0.4, 0.8, 1.0],
                     ),
                   ),
                 ),
-                // 칵테일 이름
                 Positioned(
                   left: 20,
                   right: 20,
@@ -341,25 +283,24 @@ class _DetailBody extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        detail.name.toUpperCase(),
+                        detail.nameKo, // 기본 타이틀을 한글 이름으로 변경
                         style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        detail.name.toUpperCase(), // 부타이틀로 영문 이름 배치
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white54,
                           letterSpacing: 1.5,
                         ),
                       ),
-                      if (detail.description != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          detail.description!,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF69F0AE),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 ),
@@ -367,34 +308,25 @@ class _DetailBody extends StatelessWidget {
             ),
           ),
         ),
-
-        // ── 본문 콘텐츠 ──────────────────────
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 메타 배지 행
-                _MetaBadges(
-                  detail: detail,
-                  strengthColor: strengthColor,
-                  difficultyColor: difficultyColor,
-                ),
+                _MetaBadges(detail: detail),
                 const SizedBox(height: 24),
 
-                // 재료 섹션
                 _SectionHeader(title: 'INGREDIENTS'),
                 const SizedBox(height: 12),
                 ...detail.ingredients.map(
                   (ing) => _IngredientRow(
                     ingredient: ing,
-                    icon: ingredientIcon(ing.name),
+                    icon: ingredientIcon(ing.nameKo),
                   ),
                 ),
                 const SizedBox(height: 28),
 
-                // 스텝 섹션
                 if (detail.steps.isNotEmpty) ...[
                   _SectionHeader(title: 'STEPS'),
                   const SizedBox(height: 12),
@@ -411,36 +343,23 @@ class _DetailBody extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// 이미지 플레이스홀더
-// ─────────────────────────────────────────────
 class _ImagePlaceholder extends StatelessWidget {
   const _ImagePlaceholder();
-
   @override
   Widget build(BuildContext context) {
     return Container(
       color: const Color(0xFF1E1E1E),
-      child: const Center(
-        child: Icon(Icons.local_bar, size: 80, color: Color(0xFF3A3A3A)),
-      ),
+      child: const Center(child: Icon(Icons.local_bar, size: 80, color: Color(0xFF3A3A3A))),
     );
   }
 }
 
 // ─────────────────────────────────────────────
-// 메타 배지 (알코올, 종류, 강도, 난이도)
+// 메타 배지 (JSON 데이터에 맞게 축소)
 // ─────────────────────────────────────────────
 class _MetaBadges extends StatelessWidget {
   final CocktailDetail detail;
-  final Color strengthColor;
-  final Color difficultyColor;
-
-  const _MetaBadges({
-    required this.detail,
-    required this.strengthColor,
-    required this.difficultyColor,
-  });
+  const _MetaBadges({required this.detail});
 
   @override
   Widget build(BuildContext context) {
@@ -448,29 +367,17 @@ class _MetaBadges extends StatelessWidget {
       spacing: 8,
       runSpacing: 8,
       children: [
-        if (detail.alcoholVolume != null)
+        if (detail.abv != null)
           _Badge(
-            label: 'ALC. VOL: ${detail.alcoholVolume!.toStringAsFixed(0)}%',
+            label: 'ALC. VOL: ${detail.abv!.toStringAsFixed(0)}%',
             color: Colors.white24,
             textColor: Colors.white70,
           ),
-        if (detail.spiritType != null)
+        if (detail.glassType.isNotEmpty)
           _Badge(
-            label: 'TYPE: ${detail.spiritType!.toUpperCase()}',
+            label: 'GLASS: ${detail.glassType.replaceAll('_', ' ').toUpperCase()}',
             color: Colors.white24,
             textColor: Colors.white70,
-          ),
-        if (detail.strength != null)
-          _Badge(
-            label: 'STRENGTH: ${detail.strength!.toUpperCase()}',
-            color: strengthColor.withValues(alpha: 0.2),
-            textColor: strengthColor,
-          ),
-        if (detail.difficulty != null)
-          _Badge(
-            label: 'DIFFICULTY: ${detail.difficulty!.toUpperCase()}',
-            color: difficultyColor.withValues(alpha: 0.2),
-            textColor: difficultyColor,
           ),
       ],
     );
@@ -482,11 +389,7 @@ class _Badge extends StatelessWidget {
   final Color color;
   final Color textColor;
 
-  const _Badge({
-    required this.label,
-    required this.color,
-    required this.textColor,
-  });
+  const _Badge({required this.label, required this.color, required this.textColor});
 
   @override
   Widget build(BuildContext context) {
@@ -499,41 +402,27 @@ class _Badge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: textColor,
-          letterSpacing: 0.6,
-        ),
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textColor, letterSpacing: 0.6),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────
-// 섹션 헤더
-// ─────────────────────────────────────────────
 class _SectionHeader extends StatelessWidget {
   final String title;
-
   const _SectionHeader({required this.title});
 
   @override
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: const TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.w900,
-        color: Colors.white,
-        letterSpacing: 1.2,
-      ),
+      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.2),
     );
   }
 }
 
 // ─────────────────────────────────────────────
-// 재료 한 행
+// 재료 및 스텝 로우 (데이터 구조에 맞춰 수정)
 // ─────────────────────────────────────────────
 class _IngredientRow extends StatelessWidget {
   final Ingredient ingredient;
@@ -564,12 +453,8 @@ class _IngredientRow extends StatelessWidget {
             ),
           ),
           Text(
-            ingredient.displayAmount,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+            ingredient.amount, // 기존 displayAmount 대신 바로 amount 출력
+            style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -577,9 +462,6 @@ class _IngredientRow extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// 스텝 한 행
-// ─────────────────────────────────────────────
 class _StepRow extends StatelessWidget {
   final int index;
   final String text;
@@ -596,18 +478,11 @@ class _StepRow extends StatelessWidget {
           Container(
             width: 26,
             height: 26,
-            decoration: const BoxDecoration(
-              color: Color(0xFF69F0AE),
-              shape: BoxShape.circle,
-            ),
+            decoration: const BoxDecoration(color: Color(0xFF69F0AE), shape: BoxShape.circle),
             child: Center(
               child: Text(
                 '$index',
-                style: const TextStyle(
-                  color: Color(0xFF121212),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                ),
+                style: const TextStyle(color: Color(0xFF121212), fontSize: 12, fontWeight: FontWeight.w900),
               ),
             ),
           ),
@@ -615,11 +490,7 @@ class _StepRow extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 14,
-                height: 1.5,
-              ),
+              style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
             ),
           ),
         ],
