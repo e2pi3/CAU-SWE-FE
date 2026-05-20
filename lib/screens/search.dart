@@ -3,15 +3,19 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'cocktail_detail.dart'; // ← 상세 화면 import
 
-
-// 검색 API에서 호출시 받는 정보 클래스 정의
+// ─────────────────────────────────────────────
+// 검색 결과 모델 (id 필드 추가)
+// ─────────────────────────────────────────────
 class Cocktail {
+  final int id; // ← 상세 화면 이동에 사용
   final String name;
   final String nameKo;
   final String glassType;
 
   Cocktail({
+    required this.id,
     required this.name,
     required this.nameKo,
     required this.glassType,
@@ -19,6 +23,7 @@ class Cocktail {
 
   factory Cocktail.fromJson(Map<String, dynamic> json) {
     return Cocktail(
+      id: int.parse(json['id'].toString()),
       name: json['name'],
       nameKo: json['name_ko'],
       glassType: json['glass_type'],
@@ -27,21 +32,20 @@ class Cocktail {
 }
 
 // glass_type 문자열 → 아이콘 매핑
-// 일단 지금은 전부 기본 잔으로 표시됨
 IconData _glassIcon(String glassType) {
   switch (glassType.toLowerCase()) {
     case 'cocktail glass':
     case 'martini glass':
-      return Icons.wine_bar; // 마티니/칵테일 잔
+      return Icons.wine_bar;
     case 'highball glass':
     case 'collins glass':
-      return Icons.local_drink; // 하이볼/콜린스 잔 (키 큰 잔)
+      return Icons.local_drink;
     case 'old fashioned glass':
     case 'rocks glass':
     case 'lowball glass':
-      return Icons.sports_bar; // 올드패션드/락스 잔 (낮은 잔)
+      return Icons.sports_bar;
     case 'shot glass':
-      return Icons.local_bar; // 샷 잔
+      return Icons.local_bar;
     case 'wine glass':
     case 'red wine glass':
     case 'white wine glass':
@@ -55,12 +59,12 @@ IconData _glassIcon(String glassType) {
       return Icons.sports_bar;
     case 'copper mug':
     case 'mug':
-      return Icons.coffee; // 머그
+      return Icons.coffee;
     case 'hurricane glass':
     case 'poco grande glass':
       return Icons.local_drink;
     default:
-      return Icons.local_bar; // 알 수 없는 잔 타입 fallback
+      return Icons.local_bar;
   }
 }
 
@@ -77,10 +81,7 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _isLoading = false;
   Timer? _debounceTimer;
 
-  // 우리 서버 주소인데 지금 하드코딩 되어있는거 이후에 분리해야합니다
   static const String _baseUrl = 'http://cau-swe-be-server.up.railway.app';
-
-  // 치는동안에는 검색안되게 API호출전까지의 딜레이
   static const Duration _debounceDuration = Duration(milliseconds: 500);
 
   void _onSearchChanged(String query) {
@@ -122,6 +123,19 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
+  // ── 상세 페이지로 이동 ──────────────────────
+  void _navigateToDetail(Cocktail cocktail) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CocktailDetailScreen(
+          cocktailId: cocktail.id,
+          cocktailNameKo: cocktail.nameKo,
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -161,11 +175,11 @@ class _SearchScreenState extends State<SearchScreen> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,
-                ), 
+                ),
               ),
             ),
 
-            // 얇은 로딩 인디케이터 (레이아웃 흔들림 방지용 고정 높이)
+            // 얇은 로딩 인디케이터
             SizedBox(
               height: 4,
               child: _isLoading
@@ -179,7 +193,7 @@ class _SearchScreenState extends State<SearchScreen> {
               child: _results.isEmpty
                   ? const Center(
                       child: Text(
-                        '검색어를 입력해보세요',  // TODO : 검색결과 없을시 결과없음 표시하는거 만들어야함
+                        '검색어를 입력해보세요',
                         style: TextStyle(color: Colors.grey),
                       ),
                     )
@@ -202,8 +216,17 @@ class _SearchScreenState extends State<SearchScreen> {
                           ),
                           subtitle: Text(
                             cocktail.name,
-                            style: const TextStyle(fontSize: 13, color: Color.fromARGB(255, 85, 84, 84)),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color.fromARGB(255, 85, 84, 84),
                             ),
+                          ),
+                          trailing: const Icon(
+                            Icons.chevron_right,
+                            color: Colors.grey,
+                          ),
+                          // ← 탭 시 상세 페이지로 이동
+                          onTap: () => _navigateToDetail(cocktail),
                         );
                       },
                     ),
