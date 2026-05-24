@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_text_styles.dart';
 
 class CategoryScreen extends StatelessWidget {
   const CategoryScreen({super.key});
@@ -6,10 +7,7 @@ class CategoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: Text(
-        '카테고리',
-        style: TextStyle(color: Colors.grey),
-      ),
+      child: Text('카테고리', style: AppTextStyles.placeholder),
     );
   }
 }

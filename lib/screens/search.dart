@@ -5,7 +5,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../theme/colors.dart';
+import '../theme/app_text_styles.dart';
 import '../constants/app_config.dart';
+import '../widgets/detail_app_bar.dart';
 import 'cocktail_info.dart';
 import 'ingredient_info.dart';
 
@@ -52,6 +54,7 @@ class _SearchScreenState extends State<SearchScreen> {
   List<Item> _results = [];
   bool _isLoading = false;
   bool _hasSearched = false;
+  bool _hasText = false;
   Timer? _debounceTimer;
 
   // 치는동안에는 검색안되게 API호출전까지의 딜레이
@@ -110,37 +113,42 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: const Text('검색'),
-        centerTitle: true,
-      ),
+      appBar: DetailAppBar('검색'),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         child: Column(
           children: [
             TextField(
               controller: _controller,
-              onChanged: _onSearchChanged,
+              onChanged: (value) {
+                setState(() => _hasText = value.isNotEmpty);
+                _onSearchChanged(value);
+              },
               decoration: InputDecoration(
                 hintText: '칵테일을 검색해보세요',
-                hintStyle: const TextStyle(
-                  color: AppColors.hintText,
-                ),
+                hintStyle: const TextStyle(color: AppColors.hintText),
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _controller.clear();
-                    _onSearchChanged('');
-                  },
-                ),
+                suffixIcon: _hasText
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _controller.clear();
+                          setState(() => _hasText = false);
+                          _onSearchChanged('');
+                        },
+                      )
+                    : null,
                 filled: true,
                 fillColor: AppColors.inputFill,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,
-                ), 
+                ),
               ),
             ),
 
@@ -159,7 +167,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   ? Center(
                       child: Text(
                         (_hasSearched && !_isLoading) ? '결과가 없습니다' : '검색어를 입력해보세요',
-                        style: const TextStyle(color: AppColors.emptyText),
+                        style: AppTextStyles.placeholder,
                       ),
                     )
                   : ListView.builder(
@@ -175,13 +183,10 @@ class _SearchScreenState extends State<SearchScreen> {
                             _categoryIcon(item.category),
                             color: AppColors.primary,
                           ),
-                          title: Text(
-                            item.nameKo,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
+                          title: Text(item.nameKo, style: AppTextStyles.listTitle),
                           subtitle: Text(
                             '카테고리 > ${item.category ?? ''}',
-                            style: const TextStyle(fontSize: 13, color: AppColors.subtitleText),
+                            style: AppTextStyles.subtitle,
                           ),
                           onTap: () => Navigator.push(
                             context,

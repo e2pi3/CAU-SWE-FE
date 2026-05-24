@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../theme/colors.dart';
+import '../theme/app_text_styles.dart';
 import '../constants/app_config.dart';
 
 class CocktailIngredient {
@@ -106,9 +107,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(''),
-      ),
+      appBar: AppBar(),
       body: _buildBody(),
     );
   }
@@ -132,10 +131,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
           // 영어 이름 (부제목 색상)
           Text(
             d.name,
-            style: const TextStyle(
-              color: AppColors.subtitleText,
-              fontSize: 14,
-            ),
+            style: AppTextStyles.caption,
           ),
           const SizedBox(height: 4),
 
@@ -145,7 +141,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
             children: [
               Text(
                 d.nameKo,
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                style: AppTextStyles.cocktailName,
               ),
               if (d.abv != null) ...[
                 const SizedBox(width: 10),
@@ -155,14 +151,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
                     color: AppColors.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    'ABV ${d.abv}%',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: Text('ABV ${d.abv}%', style: AppTextStyles.abvBadge),
                 ),
               ],
             ],
@@ -170,7 +159,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
           const Divider(height: 48),
 
           // 재료
-          const Text('재료', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('재료', style: AppTextStyles.sectionTitle),
           const SizedBox(height: 10),
           ...d.ingredients.map(
             (e) => Padding(
@@ -181,7 +170,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
                   Text(e.ingredient, style: const TextStyle(fontSize: 15)),
                   Text(
                     e.amount,
-                    style: const TextStyle(fontSize: 14, color: AppColors.subtitleText),
+                    style: AppTextStyles.caption,
                   ),
                 ],
               ),
@@ -190,9 +179,9 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
           const Divider(height: 48),
 
           // 제조법
-          const Text('제조법', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('제조법', style: AppTextStyles.sectionTitle),
           const SizedBox(height: 10),
-          Text(d.recipe, style: const TextStyle(fontSize: 15, height: 1.7)),
+          Text(d.recipe, style: AppTextStyles.bodyText),
           const SizedBox(height: 24),
 
           // 칵테일 사진 (스켈레톤 포함, 제조법과 사이에 구분선 없음)
@@ -216,9 +205,9 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
           const Divider(height: 48),
 
           // 설명
-          const Text('설명', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('설명', style: AppTextStyles.sectionTitle),
           const SizedBox(height: 10),
-          Text(d.description ?? '', style: const TextStyle(fontSize: 15, height: 1.7)),
+          Text(d.description ?? '', style: AppTextStyles.bodyText),
           const Divider(height: 48),
 
           // 구현 예정 영역
@@ -232,7 +221,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
             child: const Text(
               '구현 예정',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.subtitleText, fontSize: 14),
+              style: AppTextStyles.caption,
             ),
           ),
           const SizedBox(height: 24),

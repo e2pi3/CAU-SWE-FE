@@ -7,6 +7,7 @@ import 'category.dart';
 import 'favorites.dart';
 import 'mypage.dart';
 import '../theme/colors.dart';
+import '../theme/app_text_styles.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -35,7 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   static const _bodies = [
-    Center(child: Text('홈 화면', style: TextStyle(color: Colors.grey))),
+    Center(child: Text('홈 화면', style: AppTextStyles.placeholder)),
     CategoryScreen(),
     FavoritesScreen(),
     MyPageScreen(),
@@ -76,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: const BoxDecoration(
                 color: Colors.white,
                 border: Border(
-                  top: BorderSide(color: Color(0xFFE0E0E0), width: 1),
+                  top: BorderSide(color: AppColors.navBorder, width: 1),
                 ),
               ),
               child: Material(
@@ -132,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _tabItem(int index, {required double iconSize, required double fontSize}) {
     final selected = _selectedIndex == index;
-    final color = selected ? Colors.black87 : const Color.fromARGB(255, 197, 197, 197);
+    final color = selected ? AppColors.tabSelected : AppColors.tabUnselected;
     final tab = _tabs[index];
 
     return Expanded(
