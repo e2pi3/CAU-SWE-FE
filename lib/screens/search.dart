@@ -7,67 +7,36 @@ import 'package:http/http.dart' as http;
 import '../theme/colors.dart';
 import '../constants/app_config.dart';
 import 'cocktail_info.dart';
+import 'ingredient_info.dart';
 
 
 // 검색 API에서 호출시 받는 정보 클래스 정의
-class Cocktail {
+class Item {
   final String id;
-  final String name;
   final String nameKo;
-  final String glassType;
+  final String? category;
 
-  Cocktail({
+  Item({
     required this.id,
-    required this.name,
     required this.nameKo,
-    required this.glassType,
+    this.category,
   });
 
-  factory Cocktail.fromJson(Map<String, dynamic> json) {
-    return Cocktail(
+  factory Item.fromJson(Map<String, dynamic> json) {
+    return Item(
       id: json['id'].toString(),
-      name: json['name'],
       nameKo: json['name_ko'],
-      glassType: json['glass_type'],
+      category: json['category'],
     );
   }
 }
-
-// glass_type 문자열 → 아이콘 매핑
-// 일단 지금은 전부 기본 잔으로 표시됨
-IconData _glassIcon(String glassType) {
-  switch (glassType.toLowerCase()) {
-    case 'cocktail glass':
-    case 'martini glass':
-      return Icons.wine_bar;
-    case 'highball glass':
-    case 'collins glass':
-      return Icons.local_drink; 
-    case 'old fashioned glass':
-    case 'rocks glass':
-    case 'lowball glass':
-      return Icons.sports_bar; 
-    case 'shot glass':
+ // 아이콘 출력 case 문
+IconData _categoryIcon(String? category) {
+  switch (category) {
+    case '칵테일':
       return Icons.local_bar;
-    case 'wine glass':
-    case 'red wine glass':
-    case 'white wine glass':
-      return Icons.wine_bar;
-    case 'champagne flute':
-    case 'champagne glass':
-      return Icons.celebration;
-    case 'beer glass':
-    case 'beer mug':
-    case 'pint glass':
-      return Icons.sports_bar;
-    case 'copper mug':
-    case 'mug':
-      return Icons.coffee;
-    case 'hurricane glass':
-    case 'poco grande glass':
-      return Icons.local_drink;
     default:
-      return Icons.local_bar; // 알 수 없는 잔 타입 fallback
+      return Icons.liquor;
   }
 }
 
@@ -80,8 +49,9 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _controller = TextEditingController();
-  List<Cocktail> _results = [];
+  List<Item> _results = [];
   bool _isLoading = false;
+  bool _hasSearched = false;
   Timer? _debounceTimer;
 
   // 치는동안에는 검색안되게 API호출전까지의 딜레이
@@ -103,20 +73,24 @@ class _SearchScreenState extends State<SearchScreen> {
       setState(() {
         _results = [];
         _isLoading = false;
+        _hasSearched = false;
       });
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _hasSearched = true;
+    });
 
     try {
-      final uri = Uri.parse('${AppConfig.baseUrl}/cocktails/search?q=$trimmed');
+      final uri = Uri.parse('${AppConfig.baseUrl}/search?q=$trimmed');
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         setState(() {
-          _results = data.map((e) => Cocktail.fromJson(e)).toList();
+          _results = data.map((e) => Item.fromJson(e)).toList();
         });
       }
     } catch (e) {
@@ -182,37 +156,39 @@ class _SearchScreenState extends State<SearchScreen> {
 
             Expanded(
               child: _results.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
-                        '검색어를 입력해보세요',
-                        style: TextStyle(color: AppColors.emptyText),
+                        (_hasSearched && !_isLoading) ? '결과가 없습니다' : '검색어를 입력해보세요',
+                        style: const TextStyle(color: AppColors.emptyText),
                       ),
                     )
                   : ListView.builder(
                       itemCount: _results.length,
                       itemBuilder: (context, index) {
-                        final cocktail = _results[index];
+                        final item = _results[index];
                         return ListTile(
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 4.0,
                             vertical: 0.1,
                           ),
                           leading: Icon(
-                            _glassIcon(cocktail.glassType),
+                            _categoryIcon(item.category),
                             color: AppColors.primary,
                           ),
                           title: Text(
-                            cocktail.nameKo,
+                            item.nameKo,
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           subtitle: Text(
-                            cocktail.name,
+                            '카테고리 > ${item.category ?? ''}',
                             style: const TextStyle(fontSize: 13, color: AppColors.subtitleText),
                           ),
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => CocktailInfoScreen(id: cocktail.id),
+                              builder: (_) => item.category == '칵테일'
+                                  ? CocktailInfoScreen(id: item.id)
+                                  : IngredientInfoScreen(id: item.id),
                             ),
                           ),
                         );
