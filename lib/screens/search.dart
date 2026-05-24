@@ -127,7 +127,7 @@ class _SearchScreenState extends State<SearchScreen> {
               decoration: InputDecoration(
                 hintText: '칵테일을 검색해보세요',
                 hintStyle: const TextStyle(color: AppColors.hintText),
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search, size: 24),
                 suffixIcon: _hasText
                     ? IconButton(
                         icon: const Icon(Icons.clear),
