@@ -1,26 +1,44 @@
 // lib/screens/search.dart
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../theme/colors.dart';
+import '../theme/app_text_styles.dart';
+import '../constants/app_config.dart';
+import '../widgets/detail_app_bar.dart';
+import 'cocktail_info.dart';
+import 'ingredient_info.dart';
 
-class Cocktail {
-  final String name;
+
+// 검색 API에서 호출시 받는 정보 클래스 정의
+class Item {
+  final String id;
   final String nameKo;
-  final String glassType;
+  final String? category;
 
-  Cocktail({
-    required this.name,
+  Item({
+    required this.id,
     required this.nameKo,
-    required this.glassType,
+    this.category,
   });
 
-  factory Cocktail.fromJson(Map<String, dynamic> json) {
-    return Cocktail(
-      name: json['name'],
+  factory Item.fromJson(Map<String, dynamic> json) {
+    return Item(
+      id: json['id'].toString(),
       nameKo: json['name_ko'],
-      glassType: json['glass_type'],
+      category: json['category'],
     );
+  }
+}
+ // 아이콘 출력 case 문
+IconData _categoryIcon(String? category) {
+  switch (category) {
+    case '칵테일':
+      return Icons.local_bar;
+    default:
+      return Icons.liquor;
   }
 }
 
@@ -33,11 +51,13 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _controller = TextEditingController();
-  List<Cocktail> _results = [];
+  List<Item> _results = [];
   bool _isLoading = false;
+  bool _hasSearched = false;
+  bool _hasText = false;
   Timer? _debounceTimer;
 
-  static const String _baseUrl = 'http://cau-swe-be-server.up.railway.app';
+  // 치는동안에는 검색안되게 API호출전까지의 딜레이
   static const Duration _debounceDuration = Duration(milliseconds: 500);
 
   void _onSearchChanged(String query) {
@@ -55,29 +75,31 @@ class _SearchScreenState extends State<SearchScreen> {
     if (trimmed.isEmpty) {
       setState(() {
         _results = [];
-        _isLoading = false; // 빈 검색어면 로딩도 끄기
+        _isLoading = false;
+        _hasSearched = false;
       });
       return;
     }
 
-    setState(() => _isLoading = true); // 로딩 시작 (목록은 그대로 유지)
+    setState(() {
+      _isLoading = true;
+      _hasSearched = true;
+    });
 
     try {
-      final uri = Uri.parse('$_baseUrl/cocktails/search?q=$trimmed');
+      final uri = Uri.parse('${AppConfig.baseUrl}/search?q=$trimmed');
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         setState(() {
-          _results = data.map((e) => Cocktail.fromJson(e)).toList(); // 프론트 변경: API 완료되면 그때 목록 교체
+          _results = data.map((e) => Item.fromJson(e)).toList();
         });
-      } else {
-        // 에러시 기존 목록 유지 (선택), 혹은 초기화하려면 _results = [] 로 변경
       }
     } catch (e) {
-      // 네트워크 에러시도 기존 목록 유지
+      // 네트워크 에러시 기존 목록 유지
     } finally {
-      setState(() => _isLoading = false); // 로딩 종료
+      setState(() => _isLoading = false);
     }
   }
 
@@ -91,35 +113,46 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('🍹 Cocktail Search'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
+      appBar: DetailAppBar('검색'),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         child: Column(
           children: [
             TextField(
               controller: _controller,
-              onChanged: _onSearchChanged,
+              onChanged: (value) {
+                setState(() => _hasText = value.isNotEmpty);
+                _onSearchChanged(value);
+              },
               decoration: InputDecoration(
-                hintText: '칵테일 이름을 입력하세요',
+                hintText: '칵테일을 검색해보세요',
+                hintStyle: const TextStyle(color: AppColors.hintText),
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _controller.clear();
-                    _onSearchChanged('');
-                  },
+                suffixIcon: _hasText
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _controller.clear();
+                          setState(() => _hasText = false);
+                          _onSearchChanged('');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: AppColors.inputFill,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
                 ),
               ),
             ),
 
-            // 프론트 변경: CircularProgressIndicator 대신 얇은 LinearProgressIndicator
-            // 로딩 중엔 진행바 표시, 아니면 투명한 SizedBox로 자리만 유지 (레이아웃 흔들림 방지)
+            // 얇은 로딩 인디케이터 (레이아웃 흔들림 방지용 고정 높이)
             SizedBox(
               height: 4,
               child: _isLoading
@@ -127,35 +160,40 @@ class _SearchScreenState extends State<SearchScreen> {
                   : const SizedBox.shrink(),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
 
             Expanded(
-              // 프론트 변경: _isLoading 여부와 관계없이 항상 목록을 보여줌
               child: _results.isEmpty
-                  ? const Center(
-                      child: Text('검색어를 입력해보세요',
-                          style: TextStyle(color: Colors.grey)),
+                  ? Center(
+                      child: Text(
+                        (_hasSearched && !_isLoading) ? '결과가 없습니다' : '검색어를 입력해보세요',
+                        style: AppTextStyles.placeholder,
+                      ),
                     )
                   : ListView.builder(
                       itemCount: _results.length,
                       itemBuilder: (context, index) {
-                        final cocktail = _results[index];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          child: ListTile(
-                            leading: const Icon(Icons.local_bar,
-                                color: Colors.deepPurple),
-                            title: Text(cocktail.name,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(cocktail.nameKo),
-                                Text(cocktail.glassType,
-                                    style: const TextStyle(
-                                        color: Colors.grey, fontSize: 12)),
-                              ],
+                        final item = _results[index];
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 4.0,
+                            vertical: 0.1,
+                          ),
+                          leading: Icon(
+                            _categoryIcon(item.category),
+                            color: AppColors.primary,
+                          ),
+                          title: Text(item.nameKo, style: AppTextStyles.listTitle),
+                          subtitle: Text(
+                            '카테고리 > ${item.category ?? ''}',
+                            style: AppTextStyles.subtitle,
+                          ),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => item.category == '칵테일'
+                                  ? CocktailInfoScreen(id: item.id)
+                                  : IngredientInfoScreen(id: item.id),
                             ),
                           ),
                         );
