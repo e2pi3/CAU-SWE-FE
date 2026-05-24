@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_titles[_selectedIndex]),
+        title: Text(_titles[_selectedIndex], style: AppTextStyles.appBarTitle),
       ),
       body: _bodies[_selectedIndex],
       bottomNavigationBar: _bottomBar(),

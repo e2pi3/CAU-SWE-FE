@@ -5,7 +5,8 @@ import 'colors.dart';
 
 class AppTextStyles {
   // 제목
-  static const sectionTitle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold); // 섹션 헤더 · AppBar 제목 (재료, 제조법, 설명 등)
+  static const appBarTitle  = TextStyle(fontSize: 20, fontWeight: FontWeight.bold); // 홈 상단 AppBar 탭 제목 (Cocktailer, 카테고리 등)
+  static const sectionTitle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold); // 섹션 헤더 · 상세 화면 AppBar 제목 (재료, 제조법, 설명 등)
   static const cocktailName = TextStyle(fontSize: 28, fontWeight: FontWeight.bold); // 칵테일 상세 화면 한글 이름
 
   // 본문
