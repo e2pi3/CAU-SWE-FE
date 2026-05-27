@@ -42,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
     MyPageScreen(),
   ];
 
-  static const _titles = ['Cocktailer', '카테고리', '즐겨찾기', '마이페이지'];
+  static const _titles = ['홈', '카테고리', '즐겨찾기', '마이페이지'];
 
   @override
   Widget build(BuildContext context) {
@@ -59,12 +59,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final mq = MediaQuery.of(context);
     final screenHeight = mq.size.height;
     final bottomInset = mq.padding.bottom;
-    final barHeight = (screenHeight * 0.070).clamp(56.0, 80.0);
-    final fabSize = barHeight;
-    final protrude = fabSize / 4;
-    final iconSize = barHeight * 0.4;
-    final fontSize = barHeight * 0.18;
-    final searchIconSize = fabSize * 0.45;
+    final barHeight = (screenHeight * 0.070).clamp(56.0, 80.0); // 하단바 높이
+    final fabSize = barHeight+8; // 돋보기 버튼사이즈
+    final searchIconSize = fabSize * 0.45; // 돋보기 아이콘 크기
+    final protrude = fabSize / 4; // 위로 튀어나온 정도
+    final iconSize = barHeight * 0.4; // 하단바 아이콘 크기
+    final fontSize = barHeight * 0.18; // 하단바 글자 크기
 
     return SizedBox(
       height: barHeight + bottomInset,

@@ -120,6 +120,7 @@ class _SearchScreenState extends State<SearchScreen> {
           children: [
             TextField(
               controller: _controller,
+              cursorColor: AppColors.primary,
               onChanged: (value) {
                 setState(() => _hasText = value.isNotEmpty);
                 _onSearchChanged(value);
@@ -127,7 +128,7 @@ class _SearchScreenState extends State<SearchScreen> {
               decoration: InputDecoration(
                 hintText: '칵테일을 검색해보세요',
                 hintStyle: const TextStyle(color: AppColors.hintText),
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search, size: 24),
                 suffixIcon: _hasText
                     ? IconButton(
                         icon: const Icon(Icons.clear),
@@ -156,7 +157,7 @@ class _SearchScreenState extends State<SearchScreen> {
             SizedBox(
               height: 4,
               child: _isLoading
-                  ? const LinearProgressIndicator()
+                  ? const LinearProgressIndicator(color: AppColors.primary)
                   : const SizedBox.shrink(),
             ),
 
