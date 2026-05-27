@@ -120,6 +120,7 @@ class _SearchScreenState extends State<SearchScreen> {
           children: [
             TextField(
               controller: _controller,
+              cursorColor: AppColors.primary,
               onChanged: (value) {
                 setState(() => _hasText = value.isNotEmpty);
                 _onSearchChanged(value);
@@ -156,7 +157,7 @@ class _SearchScreenState extends State<SearchScreen> {
             SizedBox(
               height: 4,
               child: _isLoading
-                  ? const LinearProgressIndicator()
+                  ? const LinearProgressIndicator(color: AppColors.primary)
                   : const SizedBox.shrink(),
             ),
 
