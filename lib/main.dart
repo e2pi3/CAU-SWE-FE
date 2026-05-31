@@ -2,9 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'screens/home.dart';
-import 'screens/login.dart';
 import 'theme/colors.dart';
-import 'services/auth_service.dart';
 
 void main() {
   runApp(const Cocktailer());
@@ -53,22 +51,11 @@ class _SplashRouterState extends State<SplashRouter> {
   }
 
   Future<void> _route() async {
-    final loggedIn = await AuthService.isLoggedIn();
     if (!mounted) return;
-
-    if (loggedIn) {
-      // 로그인 상태 → 홈으로
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    } else {
-      // 비로그인 → 로그인 화면 (X 버튼으로 홈으로 이동 가능)
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => const LoginScreen(canClose: true),
-        ),
-      );
-    }
+    // 항상 홈으로 진입, 로그인 여부는 HomeScreen에서 처리
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+    );
   }
 
   @override

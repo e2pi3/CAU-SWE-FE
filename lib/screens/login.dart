@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../theme/app_text_styles.dart';
 import '../services/auth_service.dart';
-import 'home.dart';
 import 'signup.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -61,11 +60,8 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // 로그인 성공 → 홈으로 교체 (스택 전체 제거)
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-      (_) => false,
-    );
+    // 로그인 성공 → 이전 화면으로 복귀
+    Navigator.of(context).pop();
   }
 
   void _goToSignup() {
@@ -89,11 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   icon: const Icon(Icons.close, color: Colors.black87, size: 22),
-                  // pushReplacement로 진입한 경우 pop할 스택이 없으므로 홈으로 교체
-                  onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const HomeScreen()),
-                    (_) => false,
-                  ),
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
               )
             : null,
