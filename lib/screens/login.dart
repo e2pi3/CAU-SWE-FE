@@ -82,13 +82,21 @@ class _LoginScreenState extends State<LoginScreen> {
         automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          if (widget.canClose)
-            IconButton(
-              icon: const Icon(Icons.close, color: Colors.black87),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-        ],
+        leading: widget.canClose
+            ? Padding(
+                padding: const EdgeInsets.only(left: 8, top: 8),
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.close, color: Colors.black87, size: 22),
+                  // pushReplacement로 진입한 경우 pop할 스택이 없으므로 홈으로 교체
+                  onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const HomeScreen()),
+                    (_) => false,
+                  ),
+                ),
+              )
+            : null,
       ),
       body: SafeArea(
         child: SingleChildScrollView(

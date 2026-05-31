@@ -62,10 +62,10 @@ class _SplashRouterState extends State<SplashRouter> {
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } else {
-      // 비로그인 → 로그인 화면 (X 버튼 없음, 반드시 로그인 또는 가입 필요)
+      // 비로그인 → 로그인 화면 (X 버튼으로 홈으로 이동 가능)
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => const LoginScreen(canClose: false),
+          builder: (_) => const LoginScreen(canClose: true),
         ),
       );
     }
