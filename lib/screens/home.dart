@@ -6,8 +6,10 @@ import 'search.dart';
 import 'category.dart';
 import 'favorites.dart';
 import 'mypage.dart';
+import 'login.dart';
 import '../theme/colors.dart';
 import '../theme/app_text_styles.dart';
+import '../services/auth_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,6 +28,17 @@ class _HomeScreenState extends State<HomeScreen> {
       systemNavigationBarColor: Colors.white,
       systemNavigationBarIconBrightness: Brightness.dark,
     ));
+    _checkLogin();
+  }
+
+  Future<void> _checkLogin() async {
+    final loggedIn = await AuthService.isLoggedIn();
+    if (!mounted) return;
+    if (!loggedIn) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
   }
 
   static const _tabs = [

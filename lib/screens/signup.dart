@@ -168,7 +168,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 controller: _passwordConfirmController,
                 obscureText: _obscurePasswordConfirm,
                 textInputAction: TextInputAction.next,
-                decoration: _inputDecoration('비밀번호를 다시 입력하세요').copyWith(
+                decoration: _inputDecoration('비밀번호 재입력').copyWith(
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePasswordConfirm
