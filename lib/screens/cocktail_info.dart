@@ -6,17 +6,25 @@ import 'package:http/http.dart' as http;
 import '../theme/colors.dart';
 import '../theme/app_text_styles.dart';
 import '../constants/app_config.dart';
+import 'ingredient_info.dart';
+import 'search.dart';
 
 class CocktailIngredient {
   final String ingredient;
   final String amount;
+  final String? ingredientId;
 
-  CocktailIngredient({required this.ingredient, required this.amount});
+  CocktailIngredient({
+    required this.ingredient,
+    required this.amount,
+    this.ingredientId,
+  });
 
   factory CocktailIngredient.fromJson(Map<String, dynamic> json) {
     return CocktailIngredient(
       ingredient: json['ingredient'],
       amount: json['amount'],
+      ingredientId: json['id']?.toString(),
     );
   }
 }
@@ -107,7 +115,21 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SearchScreen()),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.home_outlined),
+            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: _buildBody(),
     );
   }
@@ -162,17 +184,30 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
           const Text('재료', style: AppTextStyles.sectionTitle),
           const SizedBox(height: 10),
           ...d.ingredients.map(
-            (e) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(e.ingredient, style: const TextStyle(fontSize: 15)),
-                  Text(
-                    e.amount,
-                    style: AppTextStyles.caption,
-                  ),
-                ],
+            (e) => GestureDetector(
+              onTap: e.ingredientId != null
+                  ? () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => IngredientInfoScreen(id: e.ingredientId!),
+                        ),
+                      )
+                  : null,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      e.ingredient,
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                    Text(
+                      e.amount,
+                      style: AppTextStyles.caption,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -199,7 +234,17 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
                     child: Container(color: AppColors.inputFill),
                   );
                 },
-                errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: double.infinity,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: AppColors.inputFill,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(
+                    child: Text('이미지 없음', style: AppTextStyles.caption),
+                  ),
+                ),
               ),
             ),
           const Divider(height: 48),
