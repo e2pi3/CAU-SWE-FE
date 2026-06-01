@@ -147,6 +147,20 @@ class AuthService {
     await clearTokens();
   }
 
+  // ── 시간대 멘트 조회 ─────────────────────────────────────
+  static Future<String?> getTimeMent() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${AppConfig.baseUrl}/timement'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['message'] as String?;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   // ── 내 정보 조회 ──────────────────────────────────────────
   // 성공 시 사용자 정보 Map 반환, 실패 시 null 반환
   static Future<Map<String, dynamic>?> getMe() async {
