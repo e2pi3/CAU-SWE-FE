@@ -113,7 +113,16 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: DetailAppBar('검색'),
+      appBar: DetailAppBar(
+        '검색',
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home_outlined),
+            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         child: Column(

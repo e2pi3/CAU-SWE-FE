@@ -15,7 +15,8 @@ class AppTextStyles {
 
   // 보조 텍스트
   static const subtitle    = TextStyle(fontSize: 13, color: AppColors.subtitleText); // 검색 결과 카테고리 줄
-  static const caption     = TextStyle(fontSize: 14, color: AppColors.subtitleText); // 칵테일 영문명 · 재료 용량 · 미구현 placeholder 컨테이너
+  static const caption        = TextStyle(fontSize: 14, color: AppColors.subtitleText); // 재료 용량 · 미구현 placeholder 컨테이너
+  static const cocktailNameEn = TextStyle(fontSize: 18, color: AppColors.subtitleText); // 칵테일 상세 화면 영문명
   static const placeholder = TextStyle(color: AppColors.emptyText);                  // 빈 화면 안내 문구 (미구현 탭 포함)
 
   // 뱃지

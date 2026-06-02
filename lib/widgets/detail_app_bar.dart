@@ -6,13 +6,15 @@ import '../theme/app_text_styles.dart';
 
 class DetailAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title; // AppBar에 표시할 제목
-  const DetailAppBar(this.title, {super.key});
+  final List<Widget>? actions;
+  const DetailAppBar(this.title, {super.key, this.actions});
 
   @override
   Widget build(BuildContext context) => AppBar(
         leading: const BackButton(),
         title: Text(title, style: AppTextStyles.sectionTitle),
         centerTitle: true,
+        actions: actions,
       );
 
   @override

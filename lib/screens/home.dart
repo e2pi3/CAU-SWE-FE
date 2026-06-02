@@ -10,6 +10,7 @@ import 'login.dart';
 import '../theme/colors.dart';
 import '../theme/app_text_styles.dart';
 import '../services/auth_service.dart';
+import '../main.dart' show routeObserver;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,8 +19,9 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with RouteAware {
   int _selectedIndex = 0;
+  final _tabNotifier = ValueNotifier<int>(0);
 
   @override
   void initState() {
@@ -29,6 +31,27 @@ class _HomeScreenState extends State<HomeScreen> {
       systemNavigationBarIconBrightness: Brightness.dark,
     ));
     _checkLogin();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void didPopNext() {
+    // 위에 쌓인 라우트가 팝되어 HomeScreen이 다시 활성화될 때
+    // ValueNotifier는 동일값 재할당 시 발동 안 하므로 -1을 거쳐 재발화
+    _tabNotifier.value = -1;
+    _tabNotifier.value = _selectedIndex;
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    _tabNotifier.dispose();
+    super.dispose();
   }
 
   Future<void> _checkLogin() async {
@@ -48,11 +71,11 @@ class _HomeScreenState extends State<HomeScreen> {
     (icon: Icons.person_outline, label: '마이페이지'),
   ];
 
-  static const _bodies = [
-    Center(child: Text('홈 화면', style: AppTextStyles.placeholder)),
-    CategoryScreen(),
-    FavoritesScreen(),
-    MyPageScreen(),
+  late final _bodies = [
+    const Center(child: Text('홈 화면', style: AppTextStyles.placeholder)),
+    const CategoryScreen(),
+    const FavoritesScreen(),
+    MyPageScreen(tabNotifier: _tabNotifier),
   ];
 
   static const _titles = ['홈', '카테고리', '즐겨찾기', '마이페이지'];
@@ -63,7 +86,10 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text(_titles[_selectedIndex], style: AppTextStyles.appBarTitle),
       ),
-      body: _bodies[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _bodies,
+      ),
       bottomNavigationBar: _bottomBar(),
     );
   }
@@ -154,6 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () {
           HapticFeedback.lightImpact();
           setState(() => _selectedIndex = index);
+          _tabNotifier.value = index;
         },
         radius: iconSize + fontSize + 8,
         highlightShape: BoxShape.circle,
