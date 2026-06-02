@@ -14,7 +14,7 @@ class Cocktailer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Cocktailer',
+      title: '칵테일러',
 
       debugShowCheckedModeBanner: false,
 

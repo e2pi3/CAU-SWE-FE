@@ -161,9 +161,13 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                d.nameKo,
-                style: AppTextStyles.cocktailName,
+              Expanded(
+                child: Text(
+                  d.nameKo,
+                  style: AppTextStyles.cocktailName,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               ),
               if (d.abv != null) ...[
                 const SizedBox(width: 10),
@@ -213,13 +217,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
           ),
           const Divider(height: 48),
 
-          // 제조법
-          const Text('제조법', style: AppTextStyles.sectionTitle),
-          const SizedBox(height: 10),
-          Text(d.recipe, style: AppTextStyles.bodyText),
-          const SizedBox(height: 24),
-
-          // 칵테일 사진 (스켈레톤 포함, 제조법과 사이에 구분선 없음)
+          // 칵테일 사진 (스켈레톤 포함)
           if (d.imageUrl.isNotEmpty)
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
@@ -247,6 +245,12 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
                 ),
               ),
             ),
+          const SizedBox(height: 24),
+
+          // 제조법
+          const Text('제조법', style: AppTextStyles.sectionTitle),
+          const SizedBox(height: 10),
+          Text(d.recipe, style: AppTextStyles.bodyText),
           const Divider(height: 48),
 
           // 설명

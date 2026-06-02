@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/colors.dart';
 import '../services/auth_service.dart';
 import 'login.dart';
@@ -95,38 +96,72 @@ class _MyPageScreenState extends State<MyPageScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // 멘트 + 닉네임 + 아이디
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (_timeMent != null) ...[
-                Text(
-                  _timeMent!,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    color: Colors.black87,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_timeMent != null) ...[
+                  Text(
+                    _timeMent!,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      color: Colors.black87,
+                    ),
                   ),
+                  const SizedBox(height: 6),
+                ],
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        _nickname ?? '',
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                    const Text(
+                      ' 님',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      'id : ${_username ?? ''}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: Colors.black45,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: () {
+                        Clipboard.setData(ClipboardData(text: _username ?? ''));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('아이디가 복사되었습니다.'),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                      child: const Icon(Icons.content_copy, size: 16, color: Colors.black45),
+                    ),
+                  ],
+                ),
               ],
-              Text(
-                '${_nickname ?? ''} 님',
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _username ?? '',
-                style: const TextStyle(
-                  fontSize: 18,
-                  color: Colors.black45,
-                ),
-              ),
-            ],
+            ),
           ),
-          const Spacer(),
           // 설정(톱니바퀴) 버튼
           IconButton(
             icon: const Icon(Icons.settings_outlined, size: 26),

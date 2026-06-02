@@ -63,7 +63,10 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text(_titles[_selectedIndex], style: AppTextStyles.appBarTitle),
       ),
-      body: _bodies[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _bodies,
+      ),
       bottomNavigationBar: _bottomBar(),
     );
   }
