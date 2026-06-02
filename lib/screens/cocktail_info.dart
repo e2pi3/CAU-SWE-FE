@@ -31,10 +31,10 @@ Widget _buildPartialStar(double fill, double size) {
     height: size,
     child: Stack(
       children: [
-        Icon(Icons.star_border, color: Colors.amber, size: size),
+        Icon(Icons.star_border, color: AppColors.primary, size: size),
         ClipRect(
           clipper: _FractionClipper(fill),
-          child: Icon(Icons.star, color: Colors.amber, size: size),
+          child: Icon(Icons.star, color: AppColors.primary, size: size),
         ),
       ],
     ),
@@ -215,11 +215,10 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AppDialog(
-        title: '로그인 필요',
         content: const Text(
-          '로그인이 필요합니다.\n로그인 페이지로 이동하시겠습니까?',
+          '로그인이 필요합니다.\n로그인 페이지로 이동할까요?',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: Color(0xFF555555)),
+          style: TextStyle(fontSize: 17, color: Color.fromARGB(255, 58, 58, 58), fontWeight: FontWeight.bold),
         ),
         actions: [
           AppDialogAction(
@@ -228,6 +227,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
           ),
           AppDialogAction(
             label: '로그인하기',
+            color: AppColors.primary,
             onPressed: () async {
               Navigator.of(ctx).pop();
               await Navigator.of(context).push(
@@ -252,6 +252,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
     if (!mounted) return;
 
     int selectedRating = _userRating ?? 0;
+    final initialRating = selectedRating; // 변경 여부 감지용
 
     showDialog(
       context: context,
@@ -264,8 +265,8 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
                   final starValue = i + 1;
                   return GestureDetector(
                     onTap: () {
+                      // 별 탭 시 UI만 변경, API는 닫기 시 전송
                       setDialogState(() => selectedRating = starValue);
-                      _submitRating(starValue);
                     },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -273,7 +274,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
                         starValue <= selectedRating
                             ? Icons.star
                             : Icons.star_border,
-                        color: Colors.amber,
+                        color: AppColors.primary,
                         size: 36,
                       ),
                     ),
@@ -283,7 +284,13 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
           actions: [
             AppDialogAction(
               label: '닫기',
-              onPressed: () => Navigator.of(ctx).pop(),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                // 별점이 선택됐고 이전과 달라진 경우에만 API 전송
+                if (selectedRating > 0 && selectedRating != initialRating) {
+                  _submitRating(selectedRating);
+                }
+              },
             ),
           ],
         ),

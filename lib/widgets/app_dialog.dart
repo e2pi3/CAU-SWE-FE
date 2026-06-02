@@ -7,8 +7,9 @@ import 'package:flutter/material.dart';
 class AppDialogAction {
   final String label;
   final VoidCallback onPressed;
+  final Color? color; // null이면 기본값(검정) 사용
 
-  const AppDialogAction({required this.label, required this.onPressed});
+  const AppDialogAction({required this.label, required this.onPressed, this.color});
 }
 
 /// iOS 스타일 공통 다이얼로그
@@ -70,7 +71,7 @@ class AppDialog extends StatelessWidget {
                     child: TextButton(
                       onPressed: actions[i].onPressed,
                       style: TextButton.styleFrom(
-                        foregroundColor: Colors.black87,
+                        foregroundColor: actions[i].color ?? Colors.black87,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.only(
@@ -85,9 +86,9 @@ class AppDialog extends StatelessWidget {
                       ),
                       child: Text(
                         actions[i].label,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
-                          color: Colors.black87,
+                          color: actions[i].color ?? Colors.black87,
                         ),
                       ),
                     ),
