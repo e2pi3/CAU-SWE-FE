@@ -20,6 +20,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  final _tabNotifier = ValueNotifier<int>(0);
 
   @override
   void initState() {
@@ -29,6 +30,12 @@ class _HomeScreenState extends State<HomeScreen> {
       systemNavigationBarIconBrightness: Brightness.dark,
     ));
     _checkLogin();
+  }
+
+  @override
+  void dispose() {
+    _tabNotifier.dispose();
+    super.dispose();
   }
 
   Future<void> _checkLogin() async {
@@ -48,11 +55,11 @@ class _HomeScreenState extends State<HomeScreen> {
     (icon: Icons.person_outline, label: '마이페이지'),
   ];
 
-  static const _bodies = [
-    Center(child: Text('홈 화면', style: AppTextStyles.placeholder)),
-    CategoryScreen(),
-    FavoritesScreen(),
-    MyPageScreen(),
+  late final _bodies = [
+    const Center(child: Text('홈 화면', style: AppTextStyles.placeholder)),
+    const CategoryScreen(),
+    const FavoritesScreen(),
+    MyPageScreen(tabNotifier: _tabNotifier),
   ];
 
   static const _titles = ['홈', '카테고리', '즐겨찾기', '마이페이지'];
@@ -157,6 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () {
           HapticFeedback.lightImpact();
           setState(() => _selectedIndex = index);
+          _tabNotifier.value = index;
         },
         radius: iconSize + fontSize + 8,
         highlightShape: BoxShape.circle,

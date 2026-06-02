@@ -6,7 +6,9 @@ import 'login.dart';
 import 'settings.dart';
 
 class MyPageScreen extends StatefulWidget {
-  const MyPageScreen({super.key});
+  final ValueNotifier<int> tabNotifier;
+
+  const MyPageScreen({super.key, required this.tabNotifier});
 
   @override
   State<MyPageScreen> createState() => _MyPageScreenState();
@@ -19,10 +21,26 @@ class _MyPageScreenState extends State<MyPageScreen> {
   String? _username;
   String? _timeMent;
 
+  // MyPage 탭 인덱스 (home.dart의 _bodies 기준)
+  static const _myPageTabIndex = 3;
+
   @override
   void initState() {
     super.initState();
     _loadUserInfo();
+    widget.tabNotifier.addListener(_onTabChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.tabNotifier.removeListener(_onTabChanged);
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (widget.tabNotifier.value == _myPageTabIndex) {
+      _loadUserInfo();
+    }
   }
 
   Future<void> _loadUserInfo() async {

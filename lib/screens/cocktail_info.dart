@@ -7,9 +7,39 @@ import '../theme/colors.dart';
 import '../theme/app_text_styles.dart';
 import '../constants/app_config.dart';
 import '../services/auth_service.dart';
+import '../widgets/app_dialog.dart';
 import 'ingredient_info.dart';
 import 'login.dart';
 import 'search.dart';
+
+// 별 일부 채움에 사용하는 클리퍼 (예: 4.7점이면 5번째 별을 70%만 채움)
+class _FractionClipper extends CustomClipper<Rect> {
+  final double fraction;
+  const _FractionClipper(this.fraction);
+
+  @override
+  Rect getClip(Size size) =>
+      Rect.fromLTWH(0, 0, size.width * fraction.clamp(0.0, 1.0), size.height);
+
+  @override
+  bool shouldReclip(_FractionClipper old) => old.fraction != fraction;
+}
+
+Widget _buildPartialStar(double fill, double size) {
+  return SizedBox(
+    width: size,
+    height: size,
+    child: Stack(
+      children: [
+        Icon(Icons.star_border, color: Colors.amber, size: size),
+        ClipRect(
+          clipper: _FractionClipper(fill),
+          child: Icon(Icons.star, color: Colors.amber, size: size),
+        ),
+      ],
+    ),
+  );
+}
 
 class CocktailIngredient {
   final String ingredient;
@@ -184,29 +214,100 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
   void _showLoginDialog() {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('로그인 필요'),
-        content: const Text('로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?'),
+      builder: (ctx) => AppDialog(
+        title: '로그인 필요',
+        content: const Text(
+          '로그인이 필요합니다.\n로그인 페이지로 이동하시겠습니까?',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14, color: Color(0xFF555555)),
+        ),
         actions: [
-          TextButton(
+          AppDialogAction(
+            label: '닫기',
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('닫기'),
           ),
-          TextButton(
-            onPressed: () {
+          AppDialogAction(
+            label: '로그인하기',
+            onPressed: () async {
               Navigator.of(ctx).pop();
-              Navigator.of(context).push(
+              await Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const LoginScreen()),
               );
+              if (mounted) _fetchRating();
             },
-            child: const Text('로그인하기'),
           ),
         ],
       ),
     );
   }
 
-  // 평점 위젯: ★★★★☆ 4.0 (87) 형태
+  // 평점 팝업 (로그인 확인 후 표시)
+  Future<void> _openRatingDialog() async {
+    final loggedIn = await AuthService.isLoggedIn();
+    if (!loggedIn) {
+      if (!mounted) return;
+      _showLoginDialog();
+      return;
+    }
+    if (!mounted) return;
+
+    int selectedRating = _userRating ?? 0;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AppDialog(
+          title: '칵테일을 평가해주세요!',
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_userRating != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    '내 평점: $_userRating점',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF888888),
+                    ),
+                  ),
+                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (i) {
+                  final starValue = i + 1;
+                  return GestureDetector(
+                    onTap: () {
+                      setDialogState(() => selectedRating = starValue);
+                      _submitRating(starValue);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Icon(
+                        starValue <= selectedRating
+                            ? Icons.star
+                            : Icons.star_border,
+                        color: Colors.amber,
+                        size: 36,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+          actions: [
+            AppDialogAction(
+              label: '닫기',
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 평점 위젯: ★★★★☆ 4.0 (87) 형태 — 별은 항상 평균 평점 기준으로 표시
   Widget _buildRatingWidget() {
     if (_ratingLoading) {
       return const SizedBox(
@@ -215,22 +316,15 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
       );
     }
 
-    // 별 표시 기준: 내 평점이 있으면 내 평점, 없으면 평균(반올림)
-    final displayScore = _userRating ?? _avgRating.round();
-
     return Row(
       children: [
         ...List.generate(5, (i) {
-          final starValue = i + 1;
+          final fill = (_avgRating - i).clamp(0.0, 1.0);
           return GestureDetector(
-            onTap: () => _submitRating(starValue),
+            onTap: () => _openRatingDialog(),
             child: Padding(
               padding: const EdgeInsets.only(right: 2),
-              child: Icon(
-                starValue <= displayScore ? Icons.star : Icons.star_border,
-                color: Colors.amber,
-                size: 26,
-              ),
+              child: _buildPartialStar(fill, 26),
             ),
           );
         }),
