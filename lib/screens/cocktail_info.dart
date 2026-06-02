@@ -13,6 +13,7 @@ import 'ingredient_info.dart';
 import 'search.dart';
 import '../models/cocktail_comment.dart';
 import 'cocktail_comments.dart';
+import '../utils/navigation_state.dart' show requestGoHome;
 
 // 별 일부 채움에 사용하는 클리퍼 (예: 4.7점이면 5번째 별을 70%만 채움)
 class _FractionClipper extends CustomClipper<Rect> {
@@ -490,7 +491,10 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.home_outlined),
-            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed: () {
+              requestGoHome();
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
           ),
           const SizedBox(width: 8),
         ],

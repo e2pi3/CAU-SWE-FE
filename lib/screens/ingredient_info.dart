@@ -8,6 +8,7 @@ import '../theme/app_text_styles.dart';
 import '../constants/app_config.dart';
 import 'cocktail_info.dart';
 import 'search.dart';
+import '../utils/navigation_state.dart' show requestGoHome;
 
 class IngredientCocktail {
   final String id;
@@ -151,7 +152,10 @@ class _IngredientInfoScreenState extends State<IngredientInfoScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.home_outlined),
-            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed: () {
+              requestGoHome();
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
           ),
           const SizedBox(width: 8),
         ],
