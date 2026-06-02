@@ -6,7 +6,9 @@ import 'package:http/http.dart' as http;
 import '../theme/colors.dart';
 import '../theme/app_text_styles.dart';
 import '../constants/app_config.dart';
+import '../services/auth_service.dart';
 import 'ingredient_info.dart';
+import 'login.dart';
 import 'search.dart';
 
 class CocktailIngredient {
@@ -82,10 +84,17 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
   bool _isLoading = true;
   String? _error;
 
+  // 평점 상태
+  double _avgRating = 0.0;
+  int _ratingCount = 0;
+  int? _userRating; // 로그인 사용자의 내 평점 (없으면 null)
+  bool _ratingLoading = true;
+
   @override
   void initState() {
     super.initState();
     _fetch();
+    _fetchRating();
   }
 
   Future<void> _fetch() async {
@@ -110,6 +119,128 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  // 평점 정보 조회 (로그인 상태면 내 평점도 함께)
+  Future<void> _fetchRating() async {
+    try {
+      final token = await AuthService.getAccessToken();
+      final uri = Uri.parse('${AppConfig.baseUrl}/cocktails/rating?id=${widget.id}');
+      final headers = <String, String>{};
+      if (token != null) headers['Authorization'] = 'Bearer $token';
+      final response = await http.get(uri, headers: headers);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _avgRating = (data['avg_rating'] as num).toDouble();
+          _ratingCount = data['count'] as int;
+          _userRating = data['user_rating'] as int?;
+          _ratingLoading = false;
+        });
+      } else {
+        setState(() => _ratingLoading = false);
+      }
+    } catch (_) {
+      setState(() => _ratingLoading = false);
+    }
+  }
+
+  // 평점 제출/수정 (로그인 필수)
+  Future<void> _submitRating(int score) async {
+    final loggedIn = await AuthService.isLoggedIn();
+    if (!loggedIn) {
+      if (!mounted) return;
+      _showLoginDialog();
+      return;
+    }
+    final token = await AuthService.getAccessToken();
+    try {
+      final uri = Uri.parse('${AppConfig.baseUrl}/cocktails/rating?id=${widget.id}');
+      final response = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'rating': score}),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (!mounted) return;
+        setState(() {
+          _avgRating = (data['avg_rating'] as num).toDouble();
+          _ratingCount = data['count'] as int;
+          _userRating = data['user_rating'] as int?;
+        });
+      } else if (response.statusCode == 401) {
+        // 토큰 만료 등 인증 실패
+        if (!mounted) return;
+        _showLoginDialog();
+      }
+    } catch (_) {}
+  }
+
+  // 로그인 안내 팝업
+  void _showLoginDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('로그인 필요'),
+        content: const Text('로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('닫기'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
+            },
+            child: const Text('로그인하기'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 평점 위젯: ★★★★☆ 4.0 (87) 형태
+  Widget _buildRatingWidget() {
+    if (_ratingLoading) {
+      return const SizedBox(
+        height: 32,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+
+    // 별 표시 기준: 내 평점이 있으면 내 평점, 없으면 평균(반올림)
+    final displayScore = _userRating ?? _avgRating.round();
+
+    return Row(
+      children: [
+        ...List.generate(5, (i) {
+          final starValue = i + 1;
+          return GestureDetector(
+            onTap: () => _submitRating(starValue),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 2),
+              child: Icon(
+                starValue <= displayScore ? Icons.star : Icons.star_border,
+                color: Colors.amber,
+                size: 26,
+              ),
+            ),
+          );
+        }),
+        const SizedBox(width: 8),
+        Text(
+          '${_avgRating.toStringAsFixed(1)} ($_ratingCount)',
+          style: AppTextStyles.caption,
+        ),
+      ],
+    );
   }
 
   @override
@@ -182,6 +313,8 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
               ],
             ],
           ),
+          const SizedBox(height: 12),
+          _buildRatingWidget(),
           const Divider(height: 48),
 
           // 재료
