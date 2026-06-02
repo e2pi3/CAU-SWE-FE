@@ -11,6 +11,8 @@ import '../widgets/app_dialog.dart';
 import '../widgets/login_dialog.dart';
 import 'ingredient_info.dart';
 import 'search.dart';
+import '../models/cocktail_comment.dart';
+import 'cocktail_comments.dart';
 
 // 별 일부 채움에 사용하는 클리퍼 (예: 4.7점이면 5번째 별을 70%만 채움)
 class _FractionClipper extends CustomClipper<Rect> {
@@ -120,11 +122,17 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
   int? _userRating; // 로그인 사용자의 내 평점 (없으면 null)
   bool _ratingLoading = true;
 
+  // 한줄평 미리보기 상태
+  List<CocktailComment> _previewComments = [];
+  int _totalCommentCount = 0;
+  bool _commentsLoading = true;
+
   @override
   void initState() {
     super.initState();
     _fetch();
     _fetchRating();
+    _fetchPreviewComments();
   }
 
   Future<void> _fetch() async {
@@ -267,6 +275,131 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
     );
   }
 
+  // 한줄평 미리보기 조회 (상위 2개)
+  Future<void> _fetchPreviewComments() async {
+    try {
+      final token = await AuthService.getAccessToken();
+      final uri = Uri.parse('${AppConfig.baseUrl}/cocktails/comments?id=${widget.id}&limit=2&offset=0');
+      final headers = <String, String>{};
+      if (token != null) headers['Authorization'] = 'Bearer $token';
+      final response = await http.get(uri, headers: headers);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _totalCommentCount = data['count'] as int;
+          _previewComments = (data['comments'] as List)
+              .map((e) => CocktailComment.fromJson(e as Map<String, dynamic>))
+              .toList();
+          _commentsLoading = false;
+        });
+      } else {
+        setState(() => _commentsLoading = false);
+      }
+    } catch (_) {
+      setState(() => _commentsLoading = false);
+    }
+  }
+
+  // 한줄평 상세 화면으로 이동
+  void _openCommentsScreen() {
+    if (_detail == null) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CocktailCommentsScreen(
+          cocktailId: widget.id,
+          cocktailName: _detail!.name,
+          cocktailNameKo: _detail!.nameKo,
+          cocktailImageUrl: _detail!.imageUrl,
+        ),
+      ),
+    ).then((_) => _fetchPreviewComments());
+  }
+
+  // 한줄평 섹션 (미리보기 2개)
+  Widget _buildCommentsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 헤더 행
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            const Text('한줄평', style: AppTextStyles.sectionTitle),
+            if (_totalCommentCount > 0) ...[
+              const SizedBox(width: 4),
+              Text(
+                '$_totalCommentCount',
+                style: const TextStyle(fontSize: 15, color: AppColors.subtitleText),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (_commentsLoading)
+          const SizedBox(
+            height: 40,
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          )
+        else if (_previewComments.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text('아직 한줄평이 없습니다.', style: AppTextStyles.caption),
+          )
+        else ...[
+          ..._previewComments.map((c) => _buildCommentPreviewItem(c)),
+          if (_totalCommentCount > 2)
+            GestureDetector(
+              onTap: _openCommentsScreen,
+              child: const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  '댓글 더보기 ...',
+                  style: TextStyle(fontSize: 14, color: AppColors.subtitleText),
+                ),
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCommentPreviewItem(CocktailComment comment) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: comment.nickname,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                TextSpan(
+                  text: ' (${comment.username})',
+                  style: AppTextStyles.caption,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            comment.content,
+            style: const TextStyle(fontSize: 14),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
   // 평점 위젯: ★★★★☆ 4.0 (87) 형태 — 별은 항상 평균 평점 기준으로 표시
   Widget _buildRatingWidget() {
     if (_ratingLoading) {
@@ -286,9 +419,22 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
           );
         }),
         const SizedBox(width: 8),
-        Text(
-          '${_avgRating.toStringAsFixed(1)} ($_ratingCount)',
-          style: AppTextStyles.caption,
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: _avgRating.toStringAsFixed(1),
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 16,
+                ),
+              ),
+              TextSpan(
+                text: ' ($_ratingCount)',
+                style: AppTextStyles.caption,
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -335,7 +481,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
           // 영어 이름 (부제목 색상)
           Text(
             d.name,
-            style: AppTextStyles.caption,
+            style: AppTextStyles.cocktailNameEn,
           ),
           const SizedBox(height: 4),
 
@@ -366,6 +512,10 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
           ),
           const SizedBox(height: 12),
           _buildRatingWidget(),
+          const Divider(height: 48),
+
+          // 한줄평
+          _buildCommentsSection(),
           const Divider(height: 48),
 
           // 재료
