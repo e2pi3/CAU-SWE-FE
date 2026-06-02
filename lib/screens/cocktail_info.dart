@@ -312,7 +312,10 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
           cocktailImageUrl: _detail!.imageUrl,
         ),
       ),
-    ).then((_) => _fetchPreviewComments());
+    ).then((_) {
+      _fetchPreviewComments();
+      _fetchRating(); // 댓글창에서 로그인했을 때 평점 상태도 갱신
+    });
   }
 
   // 한줄평 섹션 (미리보기 2개)
@@ -344,21 +347,33 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
         else if (_previewComments.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text('아직 한줄평이 없습니다.', style: AppTextStyles.caption),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('아직 한줄평이 없습니다.', style: AppTextStyles.caption),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: _openCommentsScreen,
+                  child: const Text(
+                    '첫 한줄평 남기기 ...',
+                    style: TextStyle(fontSize: 14, color: AppColors.subtitleText),
+                  ),
+                ),
+              ],
+            ),
           )
         else ...[
           ..._previewComments.map((c) => _buildCommentPreviewItem(c)),
-          if (_totalCommentCount > 2)
-            GestureDetector(
-              onTap: _openCommentsScreen,
-              child: const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text(
-                  '댓글 더보기 ...',
-                  style: TextStyle(fontSize: 14, color: AppColors.subtitleText),
-                ),
+          GestureDetector(
+            onTap: _openCommentsScreen,
+            child: const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text(
+                '댓글 더보기 ...',
+                style: TextStyle(fontSize: 14, color: AppColors.subtitleText),
               ),
             ),
+          ),
         ],
       ],
     );

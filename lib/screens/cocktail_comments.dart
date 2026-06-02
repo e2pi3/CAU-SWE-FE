@@ -227,7 +227,7 @@ class _CocktailCommentsScreenState extends State<CocktailCommentsScreen> {
 
           // 하단 "한줄평 작성" 캡슐 버튼
           Positioned(
-            bottom: 24,
+            bottom: 24 + MediaQuery.of(context).padding.bottom,
             left: 0,
             right: 0,
             child: Center(
@@ -236,7 +236,10 @@ class _CocktailCommentsScreenState extends State<CocktailCommentsScreen> {
                   if (!_isLoggedIn) {
                     await showLoginRequiredDialog(
                       context,
-                      onLoginSuccess: _checkLoginStatus,
+                      onLoginSuccess: () async {
+                        await _checkLoginStatus();
+                        await _refresh(); // 로그인 후 isMine 반영을 위해 댓글 재조회
+                      },
                     );
                     return;
                   }
