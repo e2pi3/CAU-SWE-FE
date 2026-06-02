@@ -8,8 +8,8 @@ import '../theme/app_text_styles.dart';
 import '../constants/app_config.dart';
 import '../services/auth_service.dart';
 import '../widgets/app_dialog.dart';
+import '../widgets/login_dialog.dart';
 import 'ingredient_info.dart';
-import 'login.dart';
 import 'search.dart';
 
 // 별 일부 채움에 사용하는 클리퍼 (예: 4.7점이면 5번째 별을 70%만 채움)
@@ -180,7 +180,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
     final loggedIn = await AuthService.isLoggedIn();
     if (!loggedIn) {
       if (!mounted) return;
-      _showLoginDialog();
+      await showLoginRequiredDialog(context, onLoginSuccess: _fetchRating);
       return;
     }
     final token = await AuthService.getAccessToken();
@@ -205,40 +205,9 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
       } else if (response.statusCode == 401) {
         // 토큰 만료 등 인증 실패
         if (!mounted) return;
-        _showLoginDialog();
+        await showLoginRequiredDialog(context, onLoginSuccess: _fetchRating);
       }
     } catch (_) {}
-  }
-
-  // 로그인 안내 팝업
-  void _showLoginDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AppDialog(
-        content: const Text(
-          '로그인이 필요합니다.\n로그인 페이지로 이동할까요?',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 17, color: Color.fromARGB(255, 58, 58, 58), fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          AppDialogAction(
-            label: '닫기',
-            onPressed: () => Navigator.of(ctx).pop(),
-          ),
-          AppDialogAction(
-            label: '로그인하기',
-            color: AppColors.primary,
-            onPressed: () async {
-              Navigator.of(ctx).pop();
-              await Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
-              if (mounted) await _fetchRating();
-            },
-          ),
-        ],
-      ),
-    );
   }
 
   // 평점 팝업 (로그인 확인 후 표시)
@@ -246,7 +215,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
     final loggedIn = await AuthService.isLoggedIn();
     if (!loggedIn) {
       if (!mounted) return;
-      _showLoginDialog();
+      await showLoginRequiredDialog(context, onLoginSuccess: _fetchRating);
       return;
     }
     if (!mounted) return;
