@@ -10,6 +10,7 @@ import 'login.dart';
 import '../theme/colors.dart';
 import '../theme/app_text_styles.dart';
 import '../services/auth_service.dart';
+import '../main.dart' show routeObserver;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,7 +19,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with RouteAware {
   int _selectedIndex = 0;
   final _tabNotifier = ValueNotifier<int>(0);
 
@@ -33,7 +34,22 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void didPopNext() {
+    // 위에 쌓인 라우트가 팝되어 HomeScreen이 다시 활성화될 때
+    // ValueNotifier는 동일값 재할당 시 발동 안 하므로 -1을 거쳐 재발화
+    _tabNotifier.value = -1;
+    _tabNotifier.value = _selectedIndex;
+  }
+
+  @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _tabNotifier.dispose();
     super.dispose();
   }

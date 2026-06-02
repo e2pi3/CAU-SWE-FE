@@ -233,7 +233,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
               await Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const LoginScreen()),
               );
-              if (mounted) _fetchRating();
+              if (mounted) await _fetchRating();
             },
           ),
         ],
@@ -258,21 +258,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AppDialog(
           title: '칵테일을 평가해주세요!',
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_userRating != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    '내 평점: $_userRating점',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF888888),
-                    ),
-                  ),
-                ),
-              Row(
+          content: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(5, (i) {
                   final starValue = i + 1;
@@ -293,8 +279,6 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
                     ),
                   );
                 }),
-              ),
-            ],
           ),
           actions: [
             AppDialogAction(
@@ -310,10 +294,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
   // 평점 위젯: ★★★★☆ 4.0 (87) 형태 — 별은 항상 평균 평점 기준으로 표시
   Widget _buildRatingWidget() {
     if (_ratingLoading) {
-      return const SizedBox(
-        height: 32,
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      );
+      return const SizedBox(height: 26);
     }
 
     return Row(

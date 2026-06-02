@@ -44,6 +44,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
   }
 
   Future<void> _loadUserInfo() async {
+    setState(() => _loading = true);
     final loggedIn = await AuthService.isLoggedIn();
     if (!mounted) return;
     if (!loggedIn) {
