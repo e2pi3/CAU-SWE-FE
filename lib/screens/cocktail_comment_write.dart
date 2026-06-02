@@ -80,7 +80,7 @@ class _CocktailCommentWriteScreenState
       appBar: AppBar(
         leading: const BackButton(),
         automaticallyImplyLeading: false,
-        title: const Text('한줄평 작성'),
+        title: const Text('댓글 작성'),
         centerTitle: true,
       ),
       body: Column(
@@ -142,7 +142,7 @@ class _CocktailCommentWriteScreenState
                   const SizedBox(height: 28),
 
                   const Text(
-                    '한줄평을 남겨주세요!',
+                    '댓글을 남겨주세요!',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 12),
@@ -155,7 +155,7 @@ class _CocktailCommentWriteScreenState
                     minLines: 3,
                     buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
                     decoration: InputDecoration(
-                      hintText: '이 칵테일에 대한 솔직한 한줄평을 남겨주세요.',
+                      hintText: '이 칵테일에 대한 솔직한 댓글을 남겨주세요.',
                       hintStyle: AppTextStyles.caption,
                       filled: true,
                       fillColor: AppColors.inputFill,

@@ -122,7 +122,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
   int? _userRating; // 로그인 사용자의 내 평점 (없으면 null)
   bool _ratingLoading = true;
 
-  // 한줄평 미리보기 상태
+  // 댓글 미리보기 상태
   List<CocktailComment> _previewComments = [];
   int _totalCommentCount = 0;
   bool _commentsLoading = true;
@@ -275,11 +275,11 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
     );
   }
 
-  // 한줄평 미리보기 조회 (상위 2개)
+  // 댓글 미리보기 조회 (상위 3개)
   Future<void> _fetchPreviewComments() async {
     try {
       final token = await AuthService.getAccessToken();
-      final uri = Uri.parse('${AppConfig.baseUrl}/cocktails/comments?id=${widget.id}&limit=2&offset=0');
+      final uri = Uri.parse('${AppConfig.baseUrl}/cocktails/comments?id=${widget.id}&offset=0');
       final headers = <String, String>{};
       if (token != null) headers['Authorization'] = 'Bearer $token';
       final response = await http.get(uri, headers: headers);
@@ -300,7 +300,7 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
     }
   }
 
-  // 한줄평 상세 화면으로 이동
+  // 댓글 상세 화면으로 이동
   void _openCommentsScreen() {
     if (_detail == null) return;
     Navigator.of(context).push(
@@ -318,63 +318,71 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
     });
   }
 
-  // 한줄평 섹션 (미리보기 2개)
+  // 댓글 섹션 (미리보기 2개)
   Widget _buildCommentsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 헤더 행
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            const Text('한줄평', style: AppTextStyles.sectionTitle),
-            if (_totalCommentCount > 0) ...[
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Icon(Icons.rate_review_outlined, color: AppColors.primary, size: 18),
+              const SizedBox(width: 6),
+              const Text('댓글', style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal)),
               const SizedBox(width: 4),
               Text(
                 '$_totalCommentCount',
-                style: const TextStyle(fontSize: 15, color: AppColors.subtitleText),
+                style: const TextStyle(fontSize: 17, color: AppColors.subtitleText),
               ),
             ],
-          ],
-        ),
-        const SizedBox(height: 8),
-        if (_commentsLoading)
-          const SizedBox(
-            height: 40,
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          )
-        else if (_previewComments.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('아직 한줄평이 없습니다.', style: AppTextStyles.caption),
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: _openCommentsScreen,
-                  child: const Text(
-                    '첫 한줄평 남기기 ...',
-                    style: TextStyle(fontSize: 14, color: AppColors.subtitleText),
-                  ),
-                ),
-              ],
-            ),
-          )
-        else ...[
-          ..._previewComments.map((c) => _buildCommentPreviewItem(c)),
-          GestureDetector(
-            onTap: _openCommentsScreen,
-            child: const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text(
-                '댓글 더보기 ...',
-                style: TextStyle(fontSize: 14, color: AppColors.subtitleText),
-              ),
-            ),
           ),
-        ],
+        ),
+        const Divider(thickness: 1, height: 1, color: Color(0xFFE0E0E0)),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+          child: _commentsLoading
+              ? const SizedBox(
+                  height: 40,
+                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                )
+              : _previewComments.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('아직 댓글이 없습니다.', style: AppTextStyles.caption),
+                          const SizedBox(height: 8),
+                          GestureDetector(
+                            onTap: _openCommentsScreen,
+                            child: const Text(
+                              '첫 댓글 남기기 ...',
+                              style: TextStyle(fontSize: 14, color: AppColors.subtitleText),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ..._previewComments.map((c) => _buildCommentPreviewItem(c)),
+                        GestureDetector(
+                          onTap: _openCommentsScreen,
+                          child: const Padding(
+                            padding: EdgeInsets.only(top: 8, bottom: 14),
+                            child: Text(
+                              '댓글 더보기 ...',
+                              style: TextStyle(fontSize: 14, color: AppColors.subtitleText),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+        ),
       ],
     );
   }
@@ -385,23 +393,37 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: comment.nickname,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+          Row(
+            children: [
+              Text(
+                comment.nickname,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              if (comment.isMine) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    '나',
+                    style: TextStyle(
+                      color: Colors.black54,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                TextSpan(
-                  text: ' (${comment.username})',
-                  style: AppTextStyles.caption,
-                ),
+              ] else ...[
+                const SizedBox(width: 4),
+                Text(' (${comment.username})', style: AppTextStyles.caption),
               ],
-            ),
+            ],
           ),
           const SizedBox(height: 2),
           Text(
@@ -488,141 +510,181 @@ class _CocktailInfoScreenState extends State<CocktailInfoScreen> {
     final d = _detail!;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.only(bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          // 영어 이름 (부제목 색상)
-          Text(
-            d.name,
-            style: AppTextStyles.cocktailNameEn,
-          ),
-          const SizedBox(height: 4),
-
-          // 한글 이름 + ABV 뱃지
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Text(
-                  d.nameKo,
-                  style: AppTextStyles.cocktailName,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
+          // 사진
+          if (d.imageUrl.isNotEmpty)
+            Image.network(
+              d.imageUrl,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                if (wasSynchronouslyLoaded || frame != null) return child;
+                return AspectRatio(
+                  aspectRatio: 1,
+                  child: Container(color: AppColors.inputFill),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) => Container(
+                width: double.infinity,
+                height: 200,
+                color: AppColors.inputFill,
+                child: const Center(
+                  child: Text('이미지 없음', style: AppTextStyles.caption),
                 ),
               ),
-              if (d.abv != null) ...[
-                const SizedBox(width: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text('ABV ${d.abv}%', style: AppTextStyles.abvBadge),
+            ),
+
+          // 이름 + 도수 + 평점
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 영어 이름 (부제목 색상)
+                Text(
+                  d.name,
+                  style: AppTextStyles.cocktailNameEn,
                 ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 12),
-          _buildRatingWidget(),
-          const Divider(height: 48),
+                const SizedBox(height: 4),
 
-          // 한줄평
-          _buildCommentsSection(),
-          const Divider(height: 48),
-
-          // 재료
-          const Text('재료', style: AppTextStyles.sectionTitle),
-          const SizedBox(height: 10),
-          ...d.ingredients.map(
-            (e) => GestureDetector(
-              onTap: e.ingredientId != null
-                  ? () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => IngredientInfoScreen(id: e.ingredientId!),
-                        ),
-                      )
-                  : null,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // 한글 이름 + ABV 뱃지
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      e.ingredient,
-                      style: const TextStyle(fontSize: 15),
+                    Expanded(
+                      child: Text(
+                        d.nameKo,
+                        style: AppTextStyles.cocktailName,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
-                    Text(
-                      e.amount,
-                      style: AppTextStyles.caption,
-                    ),
+                    if (d.abv != null) ...[
+                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text('ABV ${d.abv}%', style: AppTextStyles.abvBadge),
+                      ),
+                    ],
                   ],
                 ),
-              ),
+                const SizedBox(height: 12),
+                _buildRatingWidget(),
+              ],
             ),
           ),
-          const Divider(height: 48),
 
-          // 칵테일 사진 (스켈레톤 포함)
-          if (d.imageUrl.isNotEmpty)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                d.imageUrl,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                  if (wasSynchronouslyLoaded || frame != null) return child;
-                  return AspectRatio(
-                    aspectRatio: 1,
-                    child: Container(color: AppColors.inputFill),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) => Container(
-                  width: double.infinity,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: AppColors.inputFill,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Center(
-                    child: Text('이미지 없음', style: AppTextStyles.caption),
+          // 굵은 구분선
+          const Divider(thickness: 6, height: 6, color: Color(0xFFEEEEEE)),
+
+          // 댓글
+          _buildCommentsSection(),
+
+          // 굵은 구분선
+          const Divider(thickness: 6, height: 6, color: Color(0xFFEEEEEE)),
+
+          // 재료
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+                const Text('재료', style: AppTextStyles.sectionTitle),
+                const SizedBox(height: 10),
+                ...d.ingredients.map(
+                  (e) => GestureDetector(
+                    onTap: e.ingredientId != null
+                        ? () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => IngredientInfoScreen(id: e.ingredientId!),
+                              ),
+                            )
+                        : null,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            e.ingredient,
+                            style: const TextStyle(fontSize: 15),
+                          ),
+                          Text(
+                            e.amount,
+                            style: AppTextStyles.caption,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-          const SizedBox(height: 24),
-
-          // 제조법
-          const Text('제조법', style: AppTextStyles.sectionTitle),
-          const SizedBox(height: 10),
-          Text(d.recipe, style: AppTextStyles.bodyText),
-          const Divider(height: 48),
-
-          // 설명
-          const Text('설명', style: AppTextStyles.sectionTitle),
-          const SizedBox(height: 10),
-          Text(d.description ?? '', style: AppTextStyles.bodyText),
-          const Divider(height: 48),
-
-          // 구현 예정 영역
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 40),
-            decoration: BoxDecoration(
-              color: AppColors.inputFill,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Text(
-              '구현 예정',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.caption,
+                const SizedBox(height: 16),
+              ],
             ),
           ),
-          const SizedBox(height: 24),
+
+          // 기존 구분선
+          const Divider(thickness: 1, height: 1, color: Color(0xFFE0E0E0)),
+
+          // 제조법
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('제조법', style: AppTextStyles.sectionTitle),
+                const SizedBox(height: 10),
+                Text(d.recipe, style: AppTextStyles.bodyText),
+              ],
+            ),
+          ),
+
+          // 기존 구분선
+          const Divider(thickness: 1, height: 1, color: Color(0xFFE0E0E0)),
+
+          // 설명
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('설명', style: AppTextStyles.sectionTitle),
+                const SizedBox(height: 10),
+                Text(d.description ?? '', style: AppTextStyles.bodyText),
+              ],
+            ),
+          ),
+
+          // 굵은 구분선
+          const Divider(thickness: 6, height: 6, color: Color(0xFFEEEEEE)),
+
+          // 구현 예정 영역
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              decoration: BoxDecoration(
+                color: AppColors.inputFill,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                '구현 예정',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.caption,
+              ),
+            ),
+          ),
         ],
       ),
     );

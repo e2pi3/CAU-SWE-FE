@@ -112,6 +112,65 @@ class _CocktailCommentsScreenState extends State<CocktailCommentsScreen> {
     await _loadMore();
   }
 
+  String _formatDate(DateTime dt) {
+    return '${dt.year}.${dt.month.toString().padLeft(2, '0')}.${dt.day.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _toggleLike(CocktailComment comment) async {
+    if (!_isLoggedIn) {
+      await showLoginRequiredDialog(
+        context,
+        onLoginSuccess: () async {
+          await _checkLoginStatus();
+          await _refresh();
+        },
+      );
+      return;
+    }
+
+    // 옵티미스틱 업데이트
+    final idx = _comments.indexWhere((c) => c.id == comment.id);
+    if (idx == -1) return;
+    final wasLiked = comment.isLiked;
+    setState(() {
+      _comments[idx] = comment.copyWith(
+        isLiked: !wasLiked,
+        likeCount: wasLiked ? comment.likeCount - 1 : comment.likeCount + 1,
+      );
+    });
+
+    try {
+      final token = await AuthService.getAccessToken();
+      final uri = Uri.parse(
+        '${AppConfig.baseUrl}/cocktails/comments/like?comment_id=${comment.id}',
+      );
+      final headers = <String, String>{
+        if (token != null) 'Authorization': 'Bearer $token',
+      };
+      final response = wasLiked
+          ? await http.delete(uri, headers: headers)
+          : await http.post(uri, headers: headers);
+
+      if (response.statusCode != 200 && mounted) {
+        // 실패 시 롤백
+        final rollbackIdx = _comments.indexWhere((c) => c.id == comment.id);
+        if (rollbackIdx != -1) {
+          setState(() {
+            _comments[rollbackIdx] = comment;
+          });
+        }
+      }
+    } catch (_) {
+      // 실패 시 롤백
+      final rollbackIdx = _comments.indexWhere((c) => c.id == comment.id);
+      if (rollbackIdx != -1 && mounted) {
+        setState(() {
+          _comments[rollbackIdx] = comment;
+        });
+      }
+    }
+  }
+
   Future<void> _deleteComment() async {
     final token = await AuthService.getAccessToken();
     try {
@@ -134,7 +193,7 @@ class _CocktailCommentsScreenState extends State<CocktailCommentsScreen> {
       context: context,
       builder: (ctx) => AppDialog(
         content: const Text(
-          '이미 작성한 한줄평이 있습니다.',
+          '이미 작성한 댓글이 있습니다.',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         ),
@@ -200,22 +259,22 @@ class _CocktailCommentsScreenState extends State<CocktailCommentsScreen> {
       appBar: AppBar(
         leading: const BackButton(),
         automaticallyImplyLeading: false,
-        title: const Text('한줄평'),
+        title: const Text('댓글'),
         centerTitle: true,
       ),
       body: Stack(
         children: [
           _comments.isEmpty && !_isLoading
               ? Center(
-                  child: Text('아직 한줄평이 없습니다.', style: AppTextStyles.caption),
+                  child: Text('아직 댓글이 없습니다.', style: AppTextStyles.caption),
                 )
               : ListView.separated(
                   controller: _scrollController,
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
-                  itemCount: _comments.length + (_isLoading ? 1 : 0),
-                  separatorBuilder: (_, i) => const Divider(height: 24),
+                  padding: const EdgeInsets.only(top: 16, bottom: 100),
+                  itemCount: _comments.length + (_isLoading ? 1 : 0) + 1,
+                  separatorBuilder: (_, i) => const Divider(height: 24, thickness: 1, color: Color(0xFFE0E0E0)),
                   itemBuilder: (ctx, i) {
-                    if (i == _comments.length) {
+                    if (_isLoading && i == _comments.length) {
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 16),
                         child: Center(
@@ -223,11 +282,17 @@ class _CocktailCommentsScreenState extends State<CocktailCommentsScreen> {
                         ),
                       );
                     }
-                    return _buildCommentItem(_comments[i]);
+                    if (i >= _comments.length) {
+                      return const SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _buildCommentItem(_comments[i]),
+                    );
                   },
                 ),
 
-          // 하단 "한줄평 작성" 캡슐 버튼
+          // 하단 "댓글 작성" 캡슐 버튼
           Positioned(
             bottom: 24 + MediaQuery.of(context).padding.bottom,
             left: 0,
@@ -265,7 +330,7 @@ class _CocktailCommentsScreenState extends State<CocktailCommentsScreen> {
                     ],
                   ),
                   child: const Text(
-                    '한줄평 작성',
+                    '댓글 작성',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -291,23 +356,37 @@ class _CocktailCommentsScreenState extends State<CocktailCommentsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: c.nickname,
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                child: Row(
+                  children: [
+                    Text(
+                      c.nickname,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    if (c.isMine) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Text(
+                          '나',
+                          style: TextStyle(
+                            color: Colors.black54,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                      TextSpan(
-                        text: ' (${c.username})',
-                        style: AppTextStyles.caption,
-                      ),
+                    ] else ...[
+                      const SizedBox(width: 4),
+                      Text(' (${c.username})', style: AppTextStyles.caption),
                     ],
-                  ),
+                  ],
                 ),
               ),
               if (c.isMine)
@@ -333,8 +412,37 @@ class _CocktailCommentsScreenState extends State<CocktailCommentsScreen> {
                 ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
+          Text(
+            _formatDate(c.createdAt),
+            style: AppTextStyles.caption,
+          ),
+          const SizedBox(height: 6),
           Text(c.content, style: const TextStyle(fontSize: 14)),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              if (c.likeCount > 0)
+                Text(
+                  '${c.likeCount}명에게 도움이 되었어요',
+                  style: AppTextStyles.caption,
+                )
+              else
+                Text(
+                  '댓글이 도움 되었나요?',
+                  style: AppTextStyles.caption,
+                ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => _toggleLike(c),
+                child: Icon(
+                  c.isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                  size: 18,
+                  color: c.isLiked ? AppColors.primary : Colors.grey,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

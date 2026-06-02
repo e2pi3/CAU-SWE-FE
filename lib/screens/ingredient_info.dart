@@ -171,34 +171,44 @@ class _IngredientInfoScreenState extends State<IngredientInfoScreen> {
     final d = _detail!;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.only(top: 16, bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 영어 이름 (부제목 색상)
-          Text(
-            d.name,
-            style: AppTextStyles.caption,
-          ),
-          const SizedBox(height: 4),
+          // 이름 + 카테고리 섹션
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 영어 이름 (부제목 색상)
+                Text(
+                  d.name,
+                  style: AppTextStyles.caption,
+                ),
+                const SizedBox(height: 4),
 
-          // 한글 이름
-          Text(
-            d.nameKo,
-            style: AppTextStyles.cocktailName,
-          ),
-          const SizedBox(height: 8),
+                // 한글 이름
+                Text(
+                  d.nameKo,
+                  style: AppTextStyles.cocktailName,
+                ),
+                const SizedBox(height: 8),
 
-          // 카테고리
-          if (d.category.isNotEmpty)
-            Text(
-              '카테고리 > ${d.category}',
-              style: const TextStyle(
-                fontSize: 16,
-                color: Color.fromARGB(255, 100, 100, 100),
-              ),
+                // 카테고리
+                if (d.category.isNotEmpty)
+                  Text(
+                    '카테고리 > ${d.category}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Color.fromARGB(255, 100, 100, 100),
+                    ),
+                  ),
+              ],
             ),
-          const Divider(height: 48),
+          ),
+
+          const Divider(thickness: 1, height: 48, color: Color(0xFFE0E0E0)),
 
           // 재료 이미지
           if (d.imageUrl.isNotEmpty)
@@ -221,35 +231,42 @@ class _IngredientInfoScreenState extends State<IngredientInfoScreen> {
                 ),
               ),
             ),
-          const Divider(height: 48),
+
+          const Divider(thickness: 1, height: 48, color: Color(0xFFE0E0E0)),
 
           // 해당 재료가 들어간 칵테일 목록
-          Text(
-            '${d.nameKo}${_josaIGa(d.nameKo)} 들어간 칵테일',
-            style: AppTextStyles.sectionTitle,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${d.nameKo}${_josaIGa(d.nameKo)} 들어간 칵테일',
+                  style: AppTextStyles.sectionTitle,
+                ),
+                const SizedBox(height: 16),
+
+                if (_cocktails.isEmpty)
+                  const Text('관련 칵테일이 없습니다.', style: AppTextStyles.caption)
+                else ...[
+                  ..._cocktails.map((c) => _buildCocktailItem(context, c)),
+
+                  if (_cocktails.length < _cocktailTotal)
+                    Center(
+                      child: _isLoadingMore
+                          ? const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8),
+                              child: CircularProgressIndicator(),
+                            )
+                          : IconButton(
+                              icon: const Icon(Icons.keyboard_arrow_down),
+                              onPressed: _loadMore,
+                            ),
+                    ),
+                ],
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-
-          if (_cocktails.isEmpty)
-            const Text('관련 칵테일이 없습니다.', style: AppTextStyles.caption)
-          else ...[
-            ..._cocktails.map((c) => _buildCocktailItem(context, c)),
-
-            if (_cocktails.length < _cocktailTotal)
-              Center(
-                child: _isLoadingMore
-                    ? const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        child: CircularProgressIndicator(),
-                      )
-                    : IconButton(
-                        icon: const Icon(Icons.keyboard_arrow_down),
-                        onPressed: _loadMore,
-                      ),
-              ),
-          ],
-
-          const SizedBox(height: 24),
         ],
       ),
     );
