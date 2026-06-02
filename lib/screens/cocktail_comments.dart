@@ -200,6 +200,8 @@ class _CocktailCommentsScreenState extends State<CocktailCommentsScreen> {
       appBar: AppBar(
         leading: const BackButton(),
         automaticallyImplyLeading: false,
+        title: const Text('한줄평'),
+        centerTitle: true,
       ),
       body: Stack(
         children: [

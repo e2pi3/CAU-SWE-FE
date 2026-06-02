@@ -81,6 +81,7 @@ class _CocktailCommentWriteScreenState
         leading: const BackButton(),
         automaticallyImplyLeading: false,
         title: const Text('한줄평 작성'),
+        centerTitle: true,
       ),
       body: Column(
         children: [
