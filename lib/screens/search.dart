@@ -8,6 +8,7 @@ import '../theme/colors.dart';
 import '../theme/app_text_styles.dart';
 import '../constants/app_config.dart';
 import '../widgets/detail_app_bar.dart';
+import '../utils/navigation_state.dart' show requestGoHome;
 import 'cocktail_info.dart';
 import 'ingredient_info.dart';
 
@@ -118,7 +119,10 @@ class _SearchScreenState extends State<SearchScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.home_outlined),
-            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed: () {
+              requestGoHome();
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
           ),
           const SizedBox(width: 8),
         ],
