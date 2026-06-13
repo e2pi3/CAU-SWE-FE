@@ -5,7 +5,7 @@ import 'screens/home.dart';
 import 'theme/colors.dart';
 
 // 뒤로가기 등으로 HomeScreen이 다시 활성화될 때를 감지하기 위한 전역 옵저버
-final routeObserver = RouteObserver<ModalRoute<void>>();
+final routeObserver = RouteObserver<PageRoute<dynamic>>();
 
 void main() {
   runApp(const Cocktailer());

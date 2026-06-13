@@ -76,10 +76,24 @@ class _IngredientInfoScreenState extends State<IngredientInfoScreen> {
   bool _isLoadingMore = false;
   String? _error;
 
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     _fetch();
+    _scrollController.addListener(() {
+      final pos = _scrollController.position;
+      if (pos.pixels >= pos.maxScrollExtent - 80) {
+        _loadMore();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetch() async {
@@ -114,7 +128,7 @@ class _IngredientInfoScreenState extends State<IngredientInfoScreen> {
   }
 
   Future<void> _loadMore() async {
-    if (_isLoadingMore) return;
+    if (_isLoadingMore || _cocktails.length >= _cocktailTotal) return;
     setState(() => _isLoadingMore = true);
     try {
       final uri = Uri.parse(
@@ -175,6 +189,7 @@ class _IngredientInfoScreenState extends State<IngredientInfoScreen> {
     final d = _detail!;
 
     return SingleChildScrollView(
+      controller: _scrollController,
       padding: const EdgeInsets.only(top: 16, bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,17 +270,10 @@ class _IngredientInfoScreenState extends State<IngredientInfoScreen> {
                 else ...[
                   ..._cocktails.map((c) => _buildCocktailItem(context, c)),
 
-                  if (_cocktails.length < _cocktailTotal)
-                    Center(
-                      child: _isLoadingMore
-                          ? const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8),
-                              child: CircularProgressIndicator(),
-                            )
-                          : IconButton(
-                              icon: const Icon(Icons.keyboard_arrow_down),
-                              onPressed: _loadMore,
-                            ),
+                  if (_isLoadingMore)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Center(child: CircularProgressIndicator()),
                     ),
                 ],
               ],

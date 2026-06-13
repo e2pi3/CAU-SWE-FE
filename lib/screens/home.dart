@@ -6,6 +6,7 @@ import 'search.dart';
 import 'category.dart';
 import 'favorites.dart';
 import 'mypage.dart';
+import 'home_tab.dart';
 import 'login.dart';
 import '../theme/colors.dart';
 import '../theme/app_text_styles.dart';
@@ -37,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    routeObserver.subscribe(this, ModalRoute.of(context)!);
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
   }
 
   @override
@@ -79,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   ];
 
   late final _bodies = [
-    const Center(child: Text('홈 화면', style: AppTextStyles.placeholder)),
+    HomeTabScreen(tabNotifier: _tabNotifier),
     const CategoryScreen(),
     const FavoritesScreen(),
     MyPageScreen(tabNotifier: _tabNotifier),
