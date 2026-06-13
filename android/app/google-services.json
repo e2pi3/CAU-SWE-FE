@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "22804410519",
+    "project_id": "cocktailer-4dc54",
+    "storage_bucket": "cocktailer-4dc54.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:22804410519:android:d4bec970550ae4a4d179d2",
+        "android_client_info": {
+          "package_name": "com.cmedev.cocktailer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlNMdxG3MGviwzd5H-vRXqQRbPh5KpMBk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

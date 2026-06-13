@@ -1,13 +1,30 @@
 // lib/main.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'screens/home.dart';
 import 'theme/colors.dart';
 
 // 뒤로가기 등으로 HomeScreen이 다시 활성화될 때를 감지하기 위한 전역 옵저버
 final routeObserver = RouteObserver<PageRoute<dynamic>>();
 
-void main() {
+// 웹에서 마우스 드래그로 스크롤 가능하도록 허용
+class _AppScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.touch,
+    PointerDeviceKind.trackpad,
+  };
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const Cocktailer());
 }
 
@@ -18,6 +35,8 @@ class Cocktailer extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '칵테일러',
+
+      scrollBehavior: _AppScrollBehavior(),
 
       debugShowCheckedModeBanner: false,
 
