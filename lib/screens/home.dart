@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'search.dart';
 import 'category.dart';
 import 'favorites.dart';
@@ -11,6 +12,7 @@ import 'login.dart';
 import '../theme/colors.dart';
 import '../theme/app_text_styles.dart';
 import '../services/auth_service.dart';
+import '../widgets/app_dialog.dart';
 import '../main.dart' show routeObserver;
 import '../utils/navigation_state.dart' show consumeGoHomeRequest;
 
@@ -32,7 +34,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       systemNavigationBarColor: Colors.white,
       systemNavigationBarIconBrightness: Brightness.dark,
     ));
-    _checkLogin();
+    _init();
+  }
+
+  Future<void> _init() async {
+    await _checkLogin();
+    _showDisclaimerIfNeeded();
   }
 
   @override
@@ -70,6 +77,35 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     }
+  }
+
+  Future<void> _showDisclaimerIfNeeded() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('disclaimer_shown') ?? false) return;
+    if (!mounted) return;
+    await prefs.setBool('disclaimer_shown', true);
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AppDialog(
+        title: '안내',
+        content: const Text(
+          '이 앱은 아직 개발중인 앱으로, 칵테일에 대한 정보가 부정확하거나 올바르지 않은 표기, 번역오류가 다소 존재할 수 있습니다.\n\n'
+          '또한 모바일을 기준으로 만들어진 앱이므로 최적의 사용환경을 위해 모바일로 사용해주시면 감사하겠습니다.\n\n'
+          '사용 중 불편하신 부분이나 제안이 있으시면 언제든 연락바랍니다.\n\n'
+          '-정윤서-',
+          style: TextStyle(fontSize: 14, color: Colors.black54, height: 1.6),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          AppDialogAction(
+            label: '확인',
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
   }
 
   static const _tabs = [

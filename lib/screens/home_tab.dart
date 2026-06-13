@@ -1,7 +1,6 @@
 // lib/screens/home_tab.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../theme/colors.dart';
 import '../theme/app_text_styles.dart';
 import '../services/cocktail_service.dart';
@@ -65,10 +64,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> with TickerProviderStateM
       _loadViewsRanking();
       _loadRatingRanking();
     }
-  }
-
-  Future<void> _loadAll() async {
-    await Future.wait([_loadRandom(), _loadViewsRanking(), _loadRatingRanking()]);
   }
 
   Future<void> _loadRandom() async {
@@ -165,34 +160,16 @@ class _HomeTabScreenState extends State<HomeTabScreen> with TickerProviderStateM
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-            child: kIsWeb
-                ? Row(
-                    children: [
-                      const Text(
-                        '새로고침 버튼으로 무작위 칵테일을 추천받으세요!',
-                        style: AppTextStyles.caption,
-                      ),
-                      const SizedBox(width: 4),
-                      InkWell(
-                        onTap: _loadAll,
-                        borderRadius: BorderRadius.circular(12),
-                        child: const Padding(
-                          padding: EdgeInsets.all(2),
-                          child: Icon(Icons.refresh, size: 15, color: AppColors.subtitleText),
-                        ),
-                      ),
-                    ],
-                  )
-                : const Row(
-                    children: [
-                      Icon(Icons.refresh, size: 15, color: AppColors.subtitleText),
-                      SizedBox(width: 5),
-                      Text(
-                        '아래로 당겨서 무작위로 칵테일을 추천받으세요!',
-                        style: AppTextStyles.caption,
-                      ),
-                    ],
-                  ),
+            child: const Row(
+              children: [
+                Icon(Icons.refresh, size: 15, color: AppColors.subtitleText),
+                SizedBox(width: 5),
+                Text(
+                  '아래로 당겨서 무작위로 칵테일을 추천받으세요!',
+                  style: AppTextStyles.caption,
+                ),
+              ],
+            ),
           ),
           _buildHorizontalList(
             loading: _randomLoading,
