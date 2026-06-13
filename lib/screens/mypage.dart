@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/colors.dart';
+import '../theme/app_text_styles.dart';
 import '../services/auth_service.dart';
 import 'login.dart';
 import 'settings.dart';
@@ -132,6 +133,10 @@ class _MyPageScreenState extends State<MyPageScreen> {
           thickness: 6,
           color: Color(0xFFEEEEEE),
           height: 6,
+        ),
+        const SizedBox(height: 24),
+        const Center(
+          child: Text('구현예정', style: AppTextStyles.placeholder),
         ),
       ],
     );

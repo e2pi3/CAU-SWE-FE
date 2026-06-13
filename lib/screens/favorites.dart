@@ -7,7 +7,7 @@ class FavoritesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: Text('즐겨찾기', style: AppTextStyles.placeholder),
+      child: Text('구현 예정', style: AppTextStyles.placeholder),
     );
   }
 }

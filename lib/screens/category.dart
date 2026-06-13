@@ -7,7 +7,7 @@ class CategoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: Text('카테고리', style: AppTextStyles.placeholder),
+      child: Text('구현 예정', style: AppTextStyles.placeholder),
     );
   }
 }
