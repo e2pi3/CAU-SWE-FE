@@ -26,14 +26,17 @@
 
 ## 🛠 사용 기술 스택
 
-| 항목 | 내용 |
-|:----:|:----:|
-| Frontend | Flutter |
-| Backend | FastAPI |
-| Language | Dart / Python |
-| DB | PostgreSQL |
-| Deploy | Supabase / Railway |
-| Dev tool | Git / GitHub |
+  <div>
+    <img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white"/>
+  </div>
+  <div>
+    <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white"/>
+    <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white"/>
+  </div>
+  <div>
+    <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white"/>
+    <img src="https://img.shields.io/badge/Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white"/>
+  </div>
 
 ---
 
